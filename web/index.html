@@ -78,6 +78,21 @@
     .section-heading { font-family:Georgia,serif; font-size:20px; color:var(--text-primary); margin-bottom:16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
     .section-heading span { color:var(--gold); margin-right:8px; }
 
+    .price-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:24px; margin-bottom:24px; }
+    .price-header { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+    .price-hero { text-align:center; }
+    .price-hero-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+    .price-hero-value { font-family:Georgia,serif; font-size:32px; font-weight:bold; }
+    .price-hero-sub { font-size:12px; color:var(--text-muted); margin-top:2px; }
+    .price-summary { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; margin-bottom:20px; }
+    .price-stat { background:var(--bg-secondary); border-radius:6px; padding:12px; text-align:center; }
+    .price-stat-label { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+    .price-stat-value { font-family:Georgia,serif; font-size:18px; font-weight:bold; }
+    .price-table-wrap { max-height:400px; overflow-y:auto; border:1px solid var(--border); border-radius:6px; }
+    .price-table-wrap::-webkit-scrollbar { width:6px; }
+    .price-table-wrap::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+    .price-table-wrap .data-table th { position:sticky; top:0; z-index:1; }
+
     .rec-card { background:var(--bg-secondary); border:1px solid var(--border); border-radius:6px; padding:14px 18px; margin-bottom:10px; }
     .rec-card h4 { color:var(--gold-light); font-size:14px; margin-bottom:6px; }
     .rec-card p { color:var(--text-secondary); font-size:13px; }
@@ -145,6 +160,27 @@
       </div>
     </div>
 
+    <h2 class="section-heading"><span>Fund Unit Price</span> Projection</h2>
+    <div class="price-card" id="priceProjection">
+      <div class="price-header" id="priceHeader"></div>
+      <div class="price-summary" id="priceSummary"></div>
+      <div class="chart-card" style="margin-bottom:20px;padding:16px;">
+        <div class="chart-title">Unit Price Over Time</div>
+        <div class="chart-toggle" id="priceChartToggle">
+          <button class="active" onclick="setPriceView('nominal')">Nominal EGP</button>
+          <button onclick="setPriceView('real')">Real (CPI)</button>
+          <button onclick="setPriceView('usd')">USD</button>
+        </div>
+        <canvas id="priceChart" height="80"></canvas>
+      </div>
+      <div class="price-table-wrap">
+        <table class="data-table" id="priceTable">
+          <thead><tr><th>Date</th><th>NAV/Unit (EGP)</th><th>NAV/Unit (Real)</th><th>NAV/Unit (USD)</th><th>Chg (EGP)</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
     <h2 class="section-heading"><span>Holdings</span> Contribution</h2>
     <div class="chart-card" style="margin-bottom:24px;">
       <table class="data-table" id="holdingsTable"><thead><tr><th>Ticker</th><th>Company</th><th>Contribution (%)</th><th>Status</th></tr></thead><tbody></tbody></table>
@@ -175,8 +211,10 @@
 let RAW = null;  // raw market data
 let currentModel = "B";
 let navView = "nominal";
-let navChart = null, ddChart = null, contribChart = null;
+let priceView = "nominal";
+let navChart = null, ddChart = null, contribChart = null, priceChart = null;
 let lastResult = null;
+const LAUNCH_UNIT_PRICE = 10.00; // EGP per unit at inception
 
 // --- Data lookup helpers ---
 function buildPriceLookup(prices) {
@@ -666,6 +704,7 @@ function runAndRender() {
       renderNavChart(metrics);
       renderDrawdownChart(metrics);
       renderContribChart(metrics);
+      renderPriceProjection(result, metrics);
       renderHoldingsTable(metrics);
       renderAllocTable(result);
     } catch(e) {
@@ -773,6 +812,174 @@ function renderAllocTable(result) {
     <td>${(a.subscription/1e6).toFixed(2)}M EGP</td><td>${(a.fillRate*100).toFixed(1)}%</td>
     <td>${Math.round(a.shares).toLocaleString()}</td></tr>`).join("");
 }
+
+// ── PRICE PROJECTION ──────────────────────────────────────────
+function setPriceView(v) {
+  priceView = v;
+  document.querySelectorAll("#priceChartToggle button").forEach(b => {
+    b.classList.toggle("active",
+      (v==="nominal" && b.textContent.includes("Nominal")) ||
+      (v==="real"    && b.textContent.includes("Real"))    ||
+      (v==="usd"     && b.textContent.includes("USD"))
+    );
+  });
+  if (lastResult) renderPriceProjection(lastResult.result, lastResult.metrics);
+}
+
+function buildPriceTimeseries(result, metrics) {
+  // Build quarterly-sampled unit price series (every ~63 trading days ≈ 1 quarter)
+  const {dates, nav} = result;
+  if (!dates.length) return [];
+
+  const fxLookup  = buildLookup(RAW.usdegp);
+  const cpiLookup = buildLookup(RAW.cpi);
+  const units     = metrics.initNav / LAUNCH_UNIT_PRICE;
+  const cpiStart  = nearest(cpiLookup, dates[0]) || 100;
+  const fxStart   = nearest(fxLookup,  dates[0]) || 15.7;
+
+  // Sample ~quarterly + always include first and last
+  const quarterStep = Math.max(1, Math.round(dates.length / Math.max(1, Math.round(metrics.years * 4))));
+  const indices = new Set([0]);
+  for (let i = quarterStep; i < dates.length; i += quarterStep) indices.add(i);
+  indices.add(dates.length - 1);
+
+  return [...indices].sort((a,b)=>a-b).map(i => {
+    const d   = dates[i];
+    const fx  = nearest(fxLookup,  d) || fxStart;
+    const cpi = nearest(cpiLookup, d) || cpiStart;
+    const nom = nav[i] / units;
+    return {
+      date:    d,
+      nominal: nom,
+      real:    nom / (cpi / cpiStart),
+      usd:     nav[i] / fx / units,
+    };
+  });
+}
+
+function renderPriceProjection(result, metrics) {
+  const pts   = buildPriceTimeseries(result, metrics);
+  if (!pts.length) return;
+
+  const launch = pts[0];
+  const final  = pts[pts.length - 1];
+
+  // ── Hero stats ──
+  const totalChgNom = ((final.nominal - launch.nominal) / launch.nominal * 100);
+  const totalChgReal= ((final.real    - launch.real)    / launch.real    * 100);
+  const totalChgUsd = ((final.usd     - launch.usd)     / launch.usd     * 100);
+  const fmtEGP = v => v.toFixed(2);
+  const fmtPct = v => (v >= 0 ? "+" : "") + v.toFixed(1) + "%";
+  const cls    = v => v >= 0 ? "var(--green)" : "var(--red)";
+
+  document.getElementById("priceHeader").innerHTML = `
+    <div class="price-hero">
+      <div class="price-hero-label">Launch Price</div>
+      <div class="price-hero-value" style="color:var(--gold)">${fmtEGP(launch.nominal)} EGP</div>
+      <div class="price-hero-sub">${launch.date}</div>
+    </div>
+    <div style="font-size:28px;color:var(--border);align-self:center;">→</div>
+    <div class="price-hero">
+      <div class="price-hero-label">Final Price</div>
+      <div class="price-hero-value" style="color:${cls(totalChgNom)}">${fmtEGP(final.nominal)} EGP</div>
+      <div class="price-hero-sub">${final.date} &nbsp;·&nbsp; <span style="color:${cls(totalChgNom)}">${fmtPct(totalChgNom)}</span> total</div>
+    </div>
+    <div class="price-hero">
+      <div class="price-hero-label">Final Price (Real)</div>
+      <div class="price-hero-value" style="color:${cls(totalChgReal)}">${fmtEGP(final.real)} EGP</div>
+      <div class="price-hero-sub">After inflation &nbsp;·&nbsp; <span style="color:${cls(totalChgReal)}">${fmtPct(totalChgReal)}</span></div>
+    </div>
+    <div class="price-hero">
+      <div class="price-hero-label">Final Price (USD)</div>
+      <div class="price-hero-value" style="color:${cls(totalChgUsd)}">$${final.usd.toFixed(4)}</div>
+      <div class="price-hero-sub">Hard currency &nbsp;·&nbsp; <span style="color:${cls(totalChgUsd)}">${fmtPct(totalChgUsd)}</span></div>
+    </div>`;
+
+  // ── Summary stats ──
+  document.getElementById("priceSummary").innerHTML = [
+    {label:"CAGR (Nominal)",  value: metrics.cagrNom.toFixed(1)+"%",  color: cls(metrics.cagrNom)},
+    {label:"CAGR (Real)",     value: metrics.cagrReal.toFixed(1)+"%", color: cls(metrics.cagrReal)},
+    {label:"CAGR (USD)",      value: metrics.cagrUsd.toFixed(1)+"%",  color: cls(metrics.cagrUsd)},
+    {label:"Max Drawdown",    value: metrics.maxDD.toFixed(1)+"%",    color: "var(--red)"},
+    {label:"Total Units",     value: (metrics.initNav / LAUNCH_UNIT_PRICE / 1e6).toFixed(1)+"M", color:"var(--gold)"},
+    {label:"Period",          value: metrics.years.toFixed(1)+" yrs", color:"var(--text-secondary)"},
+  ].map(s=>`
+    <div class="price-stat">
+      <div class="price-stat-label">${s.label}</div>
+      <div class="price-stat-value" style="color:${s.color}">${s.value}</div>
+    </div>`).join("");
+
+  // ── Chart ──
+  const key = priceView === "real" ? "real" : priceView === "usd" ? "usd" : "nominal";
+  const yLabel = priceView === "usd" ? "USD/unit" : "EGP/unit";
+  const lineColor = priceView === "usd" ? "#7BAFD4" : priceView === "real" ? "#9C7EBD" : "#B8965E";
+  if (priceChart) priceChart.destroy();
+  priceChart = new Chart(document.getElementById("priceChart"), {
+    type: "line",
+    data: {
+      labels: pts.map(p => p.date),
+      datasets: [{
+        label: "Unit Price",
+        data: pts.map(p => p[key]),
+        borderColor: lineColor,
+        backgroundColor: lineColor.replace(")", ",0.08)").replace("rgb","rgba"),
+        fill: true, pointRadius: 3, pointHoverRadius: 6,
+        borderWidth: 2, tension: 0.3,
+      }, {
+        label: "Launch Price",
+        data: pts.map(() => launch[key]),
+        borderColor: "rgba(255,255,255,0.2)",
+        fill: false, pointRadius: 0, borderWidth: 1,
+        borderDash: [4, 4], tension: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: {mode:"index", intersect:false},
+      plugins: {
+        legend: {labels:{color:"#9A9285", font:{size:11}}},
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.raw;
+              return priceView === "usd"
+                ? ` $${v.toFixed(4)}/unit`
+                : ` ${v.toFixed(2)} EGP/unit`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {ticks:{color:"#9A9285", maxTicksLimit:10, font:{size:10}}, grid:{color:"rgba(58,50,40,0.5)"}},
+        y: {
+          ticks:{
+            color:"#9A9285", font:{size:10},
+            callback: v => priceView === "usd" ? "$"+v.toFixed(2) : v.toFixed(2)
+          },
+          grid:{color:"rgba(58,50,40,0.5)"}
+        }
+      }
+    }
+  });
+
+  // ── Table ──
+  const tbody = document.querySelector("#priceTable tbody");
+  tbody.innerHTML = pts.map((p, i) => {
+    const prev = pts[i - 1];
+    const chg  = prev ? ((p.nominal - prev.nominal) / prev.nominal * 100) : null;
+    const chgHtml = chg === null
+      ? `<td style="color:var(--text-muted)">—</td>`
+      : `<td style="color:${chg >= 0 ? "var(--green)" : "var(--red)"}">${chg >= 0 ? "+" : ""}${chg.toFixed(1)}%</td>`;
+    return `<tr>
+      <td style="color:var(--text-muted);font-size:12px">${p.date}</td>
+      <td style="font-weight:bold;color:var(--text-primary)">${p.nominal.toFixed(2)}</td>
+      <td style="color:${p.real >= launch.real ? "var(--green)" : "var(--red)"}">${p.real.toFixed(2)}</td>
+      <td style="color:${p.usd >= launch.usd ? "var(--green)" : "var(--red)"}">$${p.usd.toFixed(4)}</td>
+      ${chgHtml}
+    </tr>`;
+  }).join("");
+}
+// ──────────────────────────────────────────────────────────────
 
 function renderRecommendations() {
   const div = document.getElementById("recsSection");
