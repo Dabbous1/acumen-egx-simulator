@@ -146,7 +146,7 @@
 
     <div class="chart-section">
       <div class="chart-card full">
-        <div class="chart-title">Fund NAV vs EGX30</div>
+        <div class="chart-title">Fund NAV vs EGPT (VanEck Egypt ETF, in EGP)</div>
         <div class="chart-toggle" id="navToggle">
           <button class="active" onclick="setNavView('nominal')">Nominal EGP</button>
           <button onclick="setNavView('real')">Real (CPI)</button>
@@ -658,7 +658,7 @@ function buildControls() {
   const common = [
     {key:"event_types", label:"Event Types", info:"Which equity events the fund participates in. IPOs are new listings on the exchange. Rights Issues are capital increases where listed companies issue new shares, typically at a discount to existing holders.", options:[{v:"all",l:"All Events"},{v:"ipo_only",l:"IPOs Only"},{v:"ipo_ri",l:"IPOs & Rights Issues"}]},
     {key:"inception_date", label:"Inception Date", info:"The simulated fund launch date. Earlier dates give more backtest history but include different market regimes.", options:[{v:"2022-01-01",l:"Jan 2022"},{v:"2022-07-01",l:"Jul 2022"},{v:"2023-01-01",l:"Jan 2023"}]},
-    {key:"tbill_buffer", label:"T-Bill Buffer", info:"Percentage of fund AUM kept in Egyptian T-bills as a cash reserve. Earns risk-free yield (20-26%) and cushions equity drawdowns.", options:[{v:"0.10",l:"10%"},{v:"0",l:"0%"},{v:"0.20",l:"20%"}]},
+    {key:"tbill_buffer", label:"T-Bill Buffer", info:"Percentage of fund AUM kept in a risk-free cash reserve. Earns the real Egyptian deposit rate (~7% in 2021 rising to ~19% in 2024, World Bank) and cushions equity drawdowns.", options:[{v:"0.10",l:"10%"},{v:"0",l:"0%"},{v:"0.20",l:"20%"}]},
     {key:"downside_protection", label:"Downside Protection", info:"Automatic stop-loss trigger. If a position drops by this percentage from its cost basis, it is sold to limit further losses.", options:[{v:"none",l:"None"},{v:"stop15",l:"Stop 15%"},{v:"stop20",l:"Stop 20%"}]},
   ];
   const bOnly = [
@@ -756,7 +756,7 @@ function renderVerdict(m, config) {
 
   let text;
   if (pass) {
-    text = `This configuration returned ${m.cagrNom.toFixed(1)}% CAGR nominal (${m.cagrReal.toFixed(1)}% real, ${m.cagrUsd.toFixed(1)}% USD) with a ${Math.abs(m.maxDD).toFixed(1)}% max drawdown and ${m.sharpe.toFixed(2)} Sharpe. ${m.alpha > 0 ? `Outperformed EGX30 by ${m.alpha.toFixed(1)}pp.` : `Underperformed EGX30 by ${Math.abs(m.alpha).toFixed(1)}pp.`}`;
+    text = `This configuration returned ${m.cagrNom.toFixed(1)}% CAGR nominal (${m.cagrReal.toFixed(1)}% real, ${m.cagrUsd.toFixed(1)}% USD) with a ${Math.abs(m.maxDD).toFixed(1)}% max drawdown and ${m.sharpe.toFixed(2)} Sharpe. ${m.alpha > 0 ? `Outperformed the EGPT benchmark by ${m.alpha.toFixed(1)}pp.` : `Underperformed the EGPT benchmark by ${Math.abs(m.alpha).toFixed(1)}pp.`}`;
   } else {
     const reasons = [];
     if (m.totalReal <= 0) reasons.push("negative real return");
@@ -773,7 +773,7 @@ function renderKPIs(m) {
     {label:"USD Return",value:m.cagrUsd.toFixed(1)+"%",cls:m.cagrUsd>=0?"positive":"negative",sub:"Hard currency",info:"Annual return converted to US Dollars, accounting for EGP devaluation. The true international benchmark for Egyptian investors."},
     {label:"Max Drawdown",value:m.maxDD.toFixed(1)+"%",cls:"negative",sub:"Peak-to-trough",info:"Largest peak-to-trough decline in fund value. Measures the worst loss an investor would have experienced if they bought at the top."},
     {label:"Sharpe Ratio",value:m.sharpe.toFixed(2),cls:m.sharpe>=0?"positive":"negative",sub:"vs T-bills",info:"Risk-adjusted return: excess return over T-bills divided by volatility. Above 1.0 is good; below 0 means T-bills beat the fund."},
-    {label:"Alpha vs EGX30",value:(m.alpha>=0?"+":"")+m.alpha.toFixed(1)+"pp",cls:m.alpha>=0?"positive":"negative",sub:"Annualized",info:"Annualized outperformance vs the EGX30 index. Positive alpha means the fund beat the broader market on a return basis."},
+    {label:"Alpha vs EGPT",value:(m.alpha>=0?"+":"")+m.alpha.toFixed(1)+"pp",cls:m.alpha>=0?"positive":"negative",sub:"Annualized",info:"Annualized outperformance vs the EGPT benchmark (VanEck Egypt ETF, converted to EGP). Positive alpha means the fund beat the broader Egyptian market on a return basis."},
     {label:"Hit Rate",value:m.hitRate.toFixed(0)+"%",cls:m.hitRate>=50?"positive":"negative",sub:"Winners / Total",info:"Percentage of individual holdings that generated a positive return. Above 50% means more winners than losers."},
     {label:"Volatility",value:m.vol.toFixed(1)+"%",cls:"",sub:"Annualized",info:"Annualized standard deviation of daily returns. Higher volatility means larger day-to-day swings in fund value."},
   ];
@@ -797,7 +797,7 @@ function renderNavChart(m) {
       labels: ts.map(p=>p.date),
       datasets:[
         {label:"Fund NAV",data:ts.map(p=>p[key]),borderColor:"#B8965E",backgroundColor:"rgba(184,150,94,0.08)",fill:true,pointRadius:0,borderWidth:2,tension:0.3},
-        {label:"EGX30 (rebased)",data:egx.map(p=>p.value),borderColor:"#6E7280",fill:false,pointRadius:0,borderWidth:1.5,borderDash:[5,3],tension:0.3},
+        {label:"EGPT (rebased)",data:egx.map(p=>p.value),borderColor:"#6E7280",fill:false,pointRadius:0,borderWidth:1.5,borderDash:[5,3],tension:0.3},
       ]
     },
     options:{responsive:true,interaction:{mode:"index",intersect:false},plugins:{legend:{labels:{color:"#9A9285",font:{size:11}}}},scales:{x:{ticks:{color:"#9A9285",maxTicksLimit:12,font:{size:10}},grid:{color:"rgba(58,50,40,0.5)"}},y:{ticks:{color:"#9A9285",font:{size:10},callback:v=>(v/1e6).toFixed(0)+"M"},grid:{color:"rgba(58,50,40,0.5)"}}}}
@@ -1024,12 +1024,12 @@ function renderPriceProjection(result, metrics) {
 function renderRecommendations() {
   const div = document.getElementById("recsSection");
   div.innerHTML = `
-    <div class="rec-card"><h4>Event Diversification — High Impact</h4><p>Combining IPOs and rights issues expands the opportunity set from ~5 events to 15+. Rights issues from established companies (CIB, EFG Hermes, Abu Qir) provide lower-risk exposure with built-in discounts (15-30% below market). The blended universe reduces single-event dependency.</p></div>
-    <div class="rec-card"><h4>Rights Issues — Built-in Margin of Safety</h4><p>Rights issues are offered at 15-30% discounts to market price. Even with lower oversubscription (1.8-7x vs 6-68x for IPOs), the discount provides an immediate unrealized gain on allocation. The fund benefits most when it can subscribe to rights across multiple sectors. Lower oversubscription also means higher fill rates, making allocation more predictable than IPOs.</p></div>
-    <div class="rec-card"><h4>T-Bill Buffer — High Impact</h4><p>With Egyptian T-bill rates at 20-26% during this period, even a 10-20% cash buffer earns substantial risk-free income. This is the most reliable lever for cushioning equity drawdowns while still generating return.</p></div>
-    <div class="rec-card"><h4>Position Cap — Essential at 15%</h4><p>With the expanded universe of 15+ events, concentration risk is better managed. However, a 15% cap still prevents any single failed event from destroying more than 15% of the fund. Non-negotiable for the live product.</p></div>
-    <div class="rec-card"><h4>Model C: Day-1 Flip is Dominant for IPOs</h4><p>For IPO allocations, flipping on day 1 captures the listing pop. However, for rights issues the "Hold" strategy often works better due to the built-in discount providing a margin of safety. Consider a hybrid approach.</p></div>
-    <div class="rec-card"><h4>Core Finding: Real Returns Are the Only Metric That Matters</h4><p>Multiple configurations show positive nominal EGP returns but negative real returns after Egypt's 30-40% inflation. Any fund design that doesn't clear the inflation hurdle is destroying investor wealth regardless of the headline number.</p></div>
+    <div class="rec-card"><h4>Event Diversification — High Impact</h4><p>The real universe is 6 verified corporate actions: 2 IPOs (e-finance, Taaleem) and 4 cash rights issues (Export Development Bank, ADIB-Egypt, Beltone, Modern Education). Blending IPOs with rights issues spreads exposure across Technology, Education, Banking and Financial Services and reduces dependence on any single event.</p></div>
+    <div class="rec-card"><h4>Rights Issues — Discount Is Not Guaranteed</h4><p>Of the four real rights issues, three were priced below market (ADIB −29%, Beltone −36%, Modern Education −58%) giving an immediate margin of safety, but Export Development Bank was priced ~44% <em>above</em> market — a recapitalisation, not a discount. Rights issues only help when the subscription price is genuinely below the live market price, so screen each event individually rather than assuming a discount.</p></div>
+    <div class="rec-card"><h4>Cash Buffer vs the Real Risk-Free Rate</h4><p>Egypt's deposit / risk-free rate rose from ~7% (2021) to ~19% (2024, World Bank). A cash buffer earns real income and cushions drawdowns, but the bar is high: the risk-free leg only beats inflation in some years, so cash is a stabiliser, not a return engine.</p></div>
+    <div class="rec-card"><h4>Position Cap — Essential with a Small Universe</h4><p>With only 6 events, concentration risk is acute. A 15% position cap prevents any single failed event from destroying more than 15% of the fund — non-negotiable when the opportunity set is this thin.</p></div>
+    <div class="rec-card"><h4>Model C: Day-1 Flip vs Hold</h4><p>For IPO allocations, flipping on day 1 can capture the listing pop (e-finance opened at 16.80 vs a 13.98 offer). For rights issues the Hold strategy can work better when the subscription price was below market, but offers no edge when it was not. A hybrid, event-by-event decision is warranted.</p></div>
+    <div class="rec-card"><h4>Core Finding: Real Returns Are the Only Metric That Matters</h4><p>Against Egypt's real inflation (World Bank CPI), several configurations show positive nominal EGP returns but negative real returns. Any fund design that doesn't clear the inflation hurdle is destroying investor wealth regardless of the headline number.</p></div>
   `;
 }
 

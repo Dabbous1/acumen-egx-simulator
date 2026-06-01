@@ -1,380 +1,218 @@
 """
-Market data — real historic OHLCV from Yahoo Finance where available,
-synthetic fallback for tickers/series not covered.
+Market data — 100% REAL historic data. No synthetic / calibrated models.
 
-Real data (Yahoo Finance):
-  - EFIH.CA, TALM.CA, MCRO.CA  → daily OHLCV
-  - USDEGP=X                    → daily USD/EGP rate
+Sources:
+  - Yahoo Finance v8 chart API (requests + Mozilla UA), TICKER.CA:
+      EFIH, TALM, EXPA, ADIB, BTFH, MOED  → daily OHLCV
+  - Yahoo EGPT (VanEck Egypt Index ETF, USD) → benchmark, converted to EGP
+    and stored under key "egx30" (the engine's benchmark slot).
+  - Yahoo USDEGP=X → daily USD/EGP rate.
+  - World Bank API (Egypt, annual, real), monthly-interpolated:
+      FP.CPI.TOTL → consumer price index (key "cpi")
+      FR.INR.DPST → deposit interest rate, used as the risk-free / T-bill
+                    proxy (key "tbill", column "tbill_annual").
 
-Synthetic (calibrated models):
-  - NKHC, GHAZ, GOUR            → no Yahoo coverage
-  - EGX30 benchmark              → no reliable Yahoo symbol
-  - CPI, T-bill yields           → macro data, not on Yahoo
+All series are fetched live; there is no synthetic fallback. If a fetch
+fails the run will raise so that no fabricated data silently enters results.
 """
 
 import datetime as dt
+import json
+import urllib.request
 import numpy as np
 import pandas as pd
-from data.ipo_universe import EGX_IPO_UNIVERSE, IPOCompany
+from data.ipo_universe import EGX_IPO_UNIVERSE
 
-# Yahoo Finance ticker mapping for stocks with real data
+_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+# Local ticker -> Yahoo symbol (all real, all have .CA history)
 _YAHOO_TICKERS: dict[str, str] = {
     "EFIH": "EFIH.CA",
     "TALM": "TALM.CA",
-    "MCRO": "MCRO.CA",
+    "EXPA": "EXPA.CA",
+    "ADIB": "ADIB.CA",
+    "BTFH": "BTFH.CA",
+    "MOED": "MOED.CA",
 }
 
-
-def _business_days(start: dt.date, end: dt.date) -> pd.DatetimeIndex:
-    return pd.bdate_range(start, end)
-
-
-# ---------------------------------------------------------------------------
-# Real data fetchers
-# ---------------------------------------------------------------------------
-
-def _fetch_yahoo_ohlcv(
-    yahoo_ticker: str,
-    local_ticker: str,
-    start: dt.date,
-    end: dt.date,
-) -> pd.DataFrame | None:
-    """Pull real OHLCV from Yahoo Finance. Returns None on failure."""
-    try:
-        import yfinance as yf
-        df = yf.download(
-            yahoo_ticker,
-            start=str(start),
-            end=str(end + dt.timedelta(days=1)),
-            progress=False,
-            auto_adjust=True,
-        )
-        if df is None or len(df) == 0:
-            return None
-
-        # yfinance returns MultiIndex columns when downloading single ticker too
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
-
-        out = pd.DataFrame({
-            "date": df.index,
-            "ticker": local_ticker,
-            "open": df["Open"].round(2).values,
-            "high": df["High"].round(2).values,
-            "low": df["Low"].round(2).values,
-            "close": df["Close"].round(2).values,
-            "volume": df["Volume"].astype(int).values,
-        })
-        return out.reset_index(drop=True)
-    except Exception as e:
-        print(f"  [WARN] Yahoo fetch failed for {yahoo_ticker}: {e}")
-        return None
-
-
-def _fetch_yahoo_usdegp(
-    start: dt.date = dt.date(2021, 1, 1),
-    end: dt.date = dt.date(2025, 12, 31),
-) -> pd.DataFrame | None:
-    """Pull real USD/EGP daily rate from Yahoo Finance."""
-    try:
-        import yfinance as yf
-        df = yf.download(
-            "USDEGP=X",
-            start=str(start),
-            end=str(end + dt.timedelta(days=1)),
-            progress=False,
-            auto_adjust=True,
-        )
-        if df is None or len(df) == 0:
-            return None
-
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
-
-        out = pd.DataFrame({
-            "date": df.index,
-            "usdegp": df["Close"].round(4).values,
-        })
-        return out.reset_index(drop=True)
-    except Exception as e:
-        print(f"  [WARN] Yahoo fetch failed for USDEGP=X: {e}")
-        return None
+_START = dt.date(2021, 1, 1)
+_END = dt.date(2025, 12, 31)
 
 
 # ---------------------------------------------------------------------------
-# Synthetic generators (fallback)
+# Low-level HTTP
 # ---------------------------------------------------------------------------
 
-def generate_stock_prices_synthetic(
-    company: IPOCompany,
-    end_date: dt.date = dt.date(2025, 12, 31),
-    seed: int | None = None,
-) -> pd.DataFrame:
-    """Generate synthetic daily OHLCV — used only when real data is unavailable."""
-    if seed is None:
-        seed = hash(company.ticker) % (2**31)
-    rng = np.random.RandomState(seed)
+def _http_get(url: str, timeout: int = 30) -> bytes:
+    req = urllib.request.Request(url, headers={"User-Agent": _UA})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read()
 
-    dates = _business_days(company.listing_date, end_date)
-    if len(dates) == 0:
-        return pd.DataFrame()
 
-    n = len(dates)
-    price = company.offer_price
-    ev = getattr(company, "event_type", "ipo")
+# ---------------------------------------------------------------------------
+# Yahoo v8 chart fetcher
+# ---------------------------------------------------------------------------
 
-    if ev == "rights_issue":
-        first_day_pop = 1.0 + rng.uniform(0.01, 0.10)
-        daily_vol_base = rng.uniform(0.010, 0.020)
-    else:
-        first_day_pop = 1.0 + rng.uniform(0.05, 0.35)
-        daily_vol_base = rng.uniform(0.018, 0.035)
+def _fetch_yahoo_chart(symbol: str, start: dt.date, end: dt.date) -> pd.DataFrame:
+    """Pull real daily OHLCV from the Yahoo v8 chart endpoint."""
+    p1 = int(dt.datetime(start.year, start.month, start.day).timestamp())
+    p2 = int(dt.datetime(end.year, end.month, end.day).timestamp())
+    url = (
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
+        f"?period1={p1}&period2={p2}&interval=1d"
+    )
+    raw = _http_get(url)
+    d = json.loads(raw)
+    result = d["chart"]["result"]
+    if not result:
+        raise RuntimeError(f"Yahoo returned no data for {symbol}: {d['chart'].get('error')}")
+    r = result[0]
+    ts = r.get("timestamp")
+    if not ts:
+        raise RuntimeError(f"Yahoo returned no timestamps for {symbol}")
+    q = r["indicators"]["quote"][0]
+    dates = [dt.datetime.utcfromtimestamp(t).date() for t in ts]
 
-    prices = np.zeros(n)
-    volumes = np.zeros(n)
-
-    prices[0] = price * first_day_pop
-    volumes[0] = company.shares_offered * rng.uniform(0.08, 0.20)
-
-    for i in range(1, n):
-        d = dates[i].date()
-        days_since_ipo = (d - company.listing_date).days
-
-        vol_decay = max(0.6, 1.0 - days_since_ipo / 500)
-        vol = daily_vol_base * vol_decay
-
-        drift = 0.0
-        if dt.date(2022, 10, 1) <= d <= dt.date(2023, 3, 31):
-            drift = -0.0012
-            vol *= 1.4
-        elif dt.date(2024, 3, 1) <= d <= dt.date(2024, 6, 30):
-            drift = -0.0008
-            vol *= 1.3
-        elif dt.date(2023, 6, 1) <= d <= dt.date(2023, 12, 31):
-            drift = 0.0004
-        elif dt.date(2025, 1, 1) <= d:
-            drift = 0.0003
-
-        if company.sector in ("Technology / Financial Infrastructure",):
-            drift += 0.0002
-        elif company.sector in ("Sports / Entertainment",):
-            drift -= 0.0001
-
-        if ev == "rights_issue":
-            drift += 0.0001
-
-        ret = drift + vol * rng.randn()
-        prices[i] = prices[i - 1] * np.exp(ret)
-        prices[i] = max(prices[i], 0.50)
-
-        avg_vol = company.shares_offered * 0.005
-        vol_mult = max(0.3, 1.0 - days_since_ipo / 800)
-        volumes[i] = max(1000, avg_vol * vol_mult * rng.lognormal(0, 0.5))
-
-    highs = prices * (1 + rng.uniform(0.005, 0.025, n))
-    lows = prices * (1 - rng.uniform(0.005, 0.025, n))
-    opens = np.roll(prices, 1)
-    opens[0] = company.offer_price
-
-    return pd.DataFrame({
-        "date": dates,
-        "ticker": company.ticker,
-        "open": np.round(opens, 2),
-        "high": np.round(highs, 2),
-        "low": np.round(lows, 2),
-        "close": np.round(prices, 2),
-        "volume": volumes.astype(int),
+    df = pd.DataFrame({
+        "date": pd.to_datetime(dates),
+        "open": q.get("open"),
+        "high": q.get("high"),
+        "low": q.get("low"),
+        "close": q.get("close"),
+        "volume": q.get("volume"),
     })
+    # Drop rows with no close (market holidays returned as null)
+    df = df.dropna(subset=["close"]).reset_index(drop=True)
+    return df
 
 
-def generate_stock_prices(
-    company: IPOCompany,
-    end_date: dt.date = dt.date(2025, 12, 31),
-    seed: int | None = None,
-) -> pd.DataFrame:
+def _fetch_stock(local_ticker: str, start: dt.date, end: dt.date) -> pd.DataFrame:
+    sym = _YAHOO_TICKERS[local_ticker]
+    df = _fetch_yahoo_chart(sym, start, end)
+    out = pd.DataFrame({
+        "date": df["date"],
+        "ticker": local_ticker,
+        "open": df["open"].round(2),
+        "high": df["high"].round(2),
+        "low": df["low"].round(2),
+        "close": df["close"].round(2),
+        "volume": df["volume"].fillna(0).astype("int64"),
+    })
+    print(f"  {local_ticker}: {len(out)} real days from Yahoo ({sym})")
+    return out.reset_index(drop=True)
+
+
+def _fetch_usdegp(start: dt.date, end: dt.date) -> pd.DataFrame:
+    df = _fetch_yahoo_chart("USDEGP=X", start, end)
+    out = pd.DataFrame({"date": df["date"], "usdegp": df["close"].round(4)})
+    print(f"  USD/EGP: {len(out)} real days from Yahoo (USDEGP=X)")
+    return out.reset_index(drop=True)
+
+
+def _fetch_egpt_in_egp(usdegp: pd.DataFrame, start: dt.date, end: dt.date) -> pd.DataFrame:
+    """EGPT ETF (USD) converted to EGP, stored as the benchmark ('egx30' slot)."""
+    df = _fetch_yahoo_chart("EGPT", start, end)
+    df = df[["date", "close"]].rename(columns={"close": "egpt_usd"})
+    merged = pd.merge_asof(
+        df.sort_values("date"),
+        usdegp.sort_values("date"),
+        on="date",
+        direction="backward",
+    )
+    merged["egx30"] = (merged["egpt_usd"] * merged["usdegp"]).round(2)
+    out = merged[["date", "egx30"]].dropna().reset_index(drop=True)
+    print(f"  Benchmark (EGPT->EGP): {len(out)} real days from Yahoo (EGPT)")
+    return out
+
+
+# ---------------------------------------------------------------------------
+# World Bank macro (annual real, monthly-interpolated)
+# ---------------------------------------------------------------------------
+
+def _fetch_worldbank(indicator: str) -> dict[int, float]:
+    """Return {year: value} for an Egypt World Bank indicator."""
+    url = (
+        f"https://api.worldbank.org/v2/country/EGY/indicator/{indicator}"
+        f"?format=json&date=2020:2025&per_page=100"
+    )
+    raw = _http_get(url)
+    data = json.loads(raw)
+    if not isinstance(data, list) or len(data) < 2 or data[1] is None:
+        raise RuntimeError(f"World Bank returned no data for {indicator}")
+    out: dict[int, float] = {}
+    for row in data[1]:
+        if row.get("value") is not None:
+            out[int(row["date"])] = float(row["value"])
+    if not out:
+        raise RuntimeError(f"World Bank indicator {indicator} empty")
+    return out
+
+
+def _annual_to_monthly(annual: dict[int, float], start: dt.date, end: dt.date,
+                       col: str, log_interp: bool) -> pd.DataFrame:
+    """Interpolate annual year-end values to a monthly series.
+
+    Annual value is anchored at mid-year (Jul 1) of each year; months between
+    anchors are linearly interpolated (log-linear for index levels like CPI so
+    growth compounds smoothly).
     """
-    Get daily OHLCV for a stock.
-    Tries real Yahoo Finance data first; falls back to synthetic if unavailable.
-    """
-    yahoo_sym = _YAHOO_TICKERS.get(company.ticker)
-    if yahoo_sym:
-        real = _fetch_yahoo_ohlcv(yahoo_sym, company.ticker, company.listing_date, end_date)
-        if real is not None and len(real) > 0:
-            print(f"  {company.ticker}: loaded {len(real)} days of real data from Yahoo ({yahoo_sym})")
-            return real
+    anchors_x, anchors_y = [], []
+    for yr in sorted(annual):
+        anchors_x.append(pd.Timestamp(yr, 7, 1))
+        v = annual[yr]
+        anchors_y.append(np.log(v) if log_interp else v)
 
-    print(f"  {company.ticker}: using synthetic data (no Yahoo coverage)")
-    return generate_stock_prices_synthetic(company, end_date, seed)
-
-
-def generate_egx30(
-    start: dt.date = dt.date(2021, 1, 1),
-    end: dt.date = dt.date(2025, 12, 31),
-) -> pd.DataFrame:
-    """EGX30 benchmark — synthetic, calibrated to actual index trajectory."""
-    rng = np.random.RandomState(42)
-    dates = _business_days(start, end)
-    n = len(dates)
-
-    level = 10800.0
-    levels = np.zeros(n)
-
-    for i in range(n):
-        d = dates[i].date()
-        drift = 0.0002
-        vol = 0.012
-
-        if dt.date(2021, 6, 1) <= d <= dt.date(2022, 4, 30):
-            drift = 0.0005
-        elif dt.date(2022, 10, 1) <= d <= dt.date(2023, 1, 31):
-            drift = -0.0006
-            vol = 0.018
-        elif dt.date(2023, 2, 1) <= d <= dt.date(2024, 2, 28):
-            drift = 0.0008
-            vol = 0.014
-        elif dt.date(2024, 3, 1) <= d <= dt.date(2024, 6, 30):
-            drift = -0.0003
-            vol = 0.016
-        elif dt.date(2024, 7, 1) <= d:
-            drift = 0.0003
-            vol = 0.011
-
-        ret = drift + vol * rng.randn()
-        level = level * np.exp(ret)
-        levels[i] = level
-
-    return pd.DataFrame({"date": dates, "egx30": np.round(levels, 2)})
-
-
-def generate_usdegp(
-    start: dt.date = dt.date(2021, 1, 1),
-    end: dt.date = dt.date(2025, 12, 31),
-) -> pd.DataFrame:
-    """
-    USD/EGP daily rate.
-    Tries real Yahoo Finance data first; falls back to synthetic if unavailable.
-    """
-    real = _fetch_yahoo_usdegp(start, end)
-    if real is not None and len(real) > 0:
-        print(f"  USD/EGP: loaded {len(real)} days of real data from Yahoo (USDEGP=X)")
-        return real
-
-    print("  USD/EGP: using synthetic data (Yahoo unavailable)")
-    return _generate_usdegp_synthetic(start, end)
-
-
-def _generate_usdegp_synthetic(
-    start: dt.date = dt.date(2021, 1, 1),
-    end: dt.date = dt.date(2025, 12, 31),
-) -> pd.DataFrame:
-    """Synthetic USD/EGP — fallback when Yahoo is unavailable."""
-    rng = np.random.RandomState(99)
-    dates = _business_days(start, end)
-    n = len(dates)
-
-    rate = 15.70
-    rates = np.zeros(n)
-
-    for i in range(n):
-        d = dates[i].date()
-        noise = rng.randn() * 0.001
-
-        if d < dt.date(2022, 3, 1):
-            rate *= np.exp(0.0001 + noise)
-        elif d < dt.date(2022, 10, 27):
-            rate *= np.exp(0.0015 + noise)
-        elif d < dt.date(2023, 1, 12):
-            rate *= np.exp(0.004 + noise)
-        elif d < dt.date(2024, 3, 6):
-            rate *= np.exp(0.0002 + noise)
-        elif d < dt.date(2024, 4, 15):
-            rate *= np.exp(0.006 + noise)
-        else:
-            rate *= np.exp(0.0001 + noise * 0.5)
-
-        rates[i] = rate
-
-    return pd.DataFrame({"date": dates, "usdegp": np.round(rates, 4)})
-
-
-def generate_cpi(
-    start: dt.date = dt.date(2021, 1, 1),
-    end: dt.date = dt.date(2025, 12, 31),
-) -> pd.DataFrame:
-    """Monthly CPI index — synthetic, calibrated to Egypt's inflation trajectory."""
     months = pd.date_range(start, end, freq="MS")
-    cpi = 100.0
-    values = []
+    x_num = np.array([a.value for a in anchors_x], dtype=float)
+    m_num = np.array([m.value for m in months], dtype=float)
+    interp = np.interp(m_num, x_num, anchors_y)
+    if log_interp:
+        interp = np.exp(interp)
 
-    for m in months:
-        d = m.date()
-        if d < dt.date(2022, 3, 1):
-            monthly_inf = 0.005
-        elif d < dt.date(2022, 10, 1):
-            monthly_inf = 0.012
-        elif d < dt.date(2023, 9, 1):
-            monthly_inf = 0.025
-        elif d < dt.date(2024, 6, 1):
-            monthly_inf = 0.028
-        else:
-            monthly_inf = 0.010
-
-        cpi *= (1 + monthly_inf)
-        values.append({"date": m, "cpi": round(cpi, 2)})
-
-    return pd.DataFrame(values)
+    return pd.DataFrame({"date": months, col: np.round(interp, 4)})
 
 
-def generate_tbill_rate(
-    start: dt.date = dt.date(2021, 1, 1),
-    end: dt.date = dt.date(2025, 12, 31),
-) -> pd.DataFrame:
-    """Egyptian T-bill annualized yield — synthetic, tracks CBE policy rate."""
-    months = pd.date_range(start, end, freq="MS")
-    values = []
+def _fetch_cpi(start: dt.date, end: dt.date) -> pd.DataFrame:
+    annual = _fetch_worldbank("FP.CPI.TOTL")
+    df = _annual_to_monthly(annual, start, end, "cpi", log_interp=True)
+    print(f"  CPI: {len(df)} months from World Bank (FP.CPI.TOTL, {min(annual)}-{max(annual)})")
+    return df
 
-    for m in months:
-        d = m.date()
-        if d < dt.date(2022, 3, 1):
-            rate = 0.125
-        elif d < dt.date(2022, 10, 1):
-            rate = 0.145
-        elif d < dt.date(2023, 3, 1):
-            rate = 0.175
-        elif d < dt.date(2023, 8, 1):
-            rate = 0.195
-        elif d < dt.date(2024, 3, 1):
-            rate = 0.225
-        elif d < dt.date(2024, 9, 1):
-            rate = 0.265
-        else:
-            rate = 0.225
 
-        values.append({"date": m, "tbill_annual": rate})
+def _fetch_tbill(start: dt.date, end: dt.date) -> pd.DataFrame:
+    annual = _fetch_worldbank("FR.INR.DPST")  # deposit rate, % per annum
+    df = _annual_to_monthly(annual, start, end, "tbill_annual", log_interp=False)
+    df["tbill_annual"] = (df["tbill_annual"] / 100.0).round(4)  # % -> fraction
+    print(f"  Risk-free (deposit rate): {len(df)} months from World Bank (FR.INR.DPST)")
+    return df
 
-    return pd.DataFrame(values)
 
+# ---------------------------------------------------------------------------
+# Assembly
+# ---------------------------------------------------------------------------
 
 def build_full_dataset() -> dict[str, pd.DataFrame]:
-    """
-    Build the complete dataset for the simulation.
-    Uses real Yahoo Finance data where available, synthetic fallback otherwise.
-    """
-    end = dt.date(2025, 12, 31)
+    """Build the complete REAL dataset. Raises on any fetch failure."""
+    start, end = _START, _END
 
-    print("Loading market data (real + synthetic hybrid)...")
+    print("Loading REAL stock prices from Yahoo Finance...")
     stock_frames = []
     for co in EGX_IPO_UNIVERSE:
-        if co.listing_date <= end:
-            df = generate_stock_prices(co, end)
-            if len(df) > 0:
-                stock_frames.append(df)
+        df = _fetch_stock(co.ticker, co.listing_date, end)
+        if len(df) == 0:
+            raise RuntimeError(f"No real price data returned for {co.ticker}")
+        stock_frames.append(df)
 
-    print("Loading macro data...")
+    print("Loading REAL macro / FX / benchmark data...")
+    usdegp = _fetch_usdegp(start, end)
+    egx30 = _fetch_egpt_in_egp(usdegp, start, end)
+    cpi = _fetch_cpi(start, end)
+    tbill = _fetch_tbill(start, end)
+
     return {
         "prices": pd.concat(stock_frames, ignore_index=True),
-        "egx30": generate_egx30(end=end),
-        "usdegp": generate_usdegp(end=end),
-        "cpi": generate_cpi(end=end),
-        "tbill": generate_tbill_rate(end=end),
+        "egx30": egx30,
+        "usdegp": usdegp,
+        "cpi": cpi,
+        "tbill": tbill,
     }
