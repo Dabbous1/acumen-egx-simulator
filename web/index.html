@@ -763,6 +763,7 @@ function selectModel(m) {
   document.querySelectorAll(".model-tab").forEach(t => t.classList.toggle("active", t.dataset.model === m));
   buildControls();
   renderDocPanel();
+  renderRecommendations();
   runAndRender();
 }
 
@@ -1114,14 +1115,30 @@ function renderPriceProjection(result, metrics) {
 
 function renderRecommendations() {
   const div = document.getElementById("recsSection");
-  div.innerHTML = `
-    <div class="rec-card"><h4>Event Diversification — High Impact</h4><p>Combining IPOs and rights issues expands the opportunity set from ~5 events to 15+. Rights issues from established companies (CIB, EFG Hermes, Abu Qir) provide lower-risk exposure with built-in discounts (15-30% below market). The blended universe reduces single-event dependency.</p></div>
-    <div class="rec-card"><h4>Rights Issues — Built-in Margin of Safety</h4><p>Rights issues are offered at 15-30% discounts to market price. Even with lower oversubscription (1.8-7x vs 6-68x for IPOs), the discount provides an immediate unrealized gain on allocation. The fund benefits most when it can subscribe to rights across multiple sectors. Lower oversubscription also means higher fill rates, making allocation more predictable than IPOs.</p></div>
-    <div class="rec-card"><h4>T-Bill Buffer — High Impact</h4><p>With Egyptian T-bill rates at 20-26% during this period, even a 10-20% cash buffer earns substantial risk-free income. This is the most reliable lever for cushioning equity drawdowns while still generating return.</p></div>
-    <div class="rec-card"><h4>Position Cap — Essential at 15%</h4><p>With the expanded universe of 15+ events, concentration risk is better managed. However, a 15% cap still prevents any single failed event from destroying more than 15% of the fund. Non-negotiable for the live product.</p></div>
-    <div class="rec-card"><h4>Model C: Day-1 Flip is Dominant for IPOs</h4><p>For IPO allocations, flipping on day 1 captures the listing pop. However, for rights issues the "Hold" strategy often works better due to the built-in discount providing a margin of safety. Consider a hybrid approach.</p></div>
-    <div class="rec-card"><h4>Core Finding: Real Returns Are the Only Metric That Matters</h4><p>Multiple configurations show positive nominal EGP returns but negative real returns after Egypt's 30-40% inflation. Any fund design that doesn't clear the inflation hurdle is destroying investor wealth regardless of the headline number.</p></div>
-  `;
+  const isB = currentModel === "B";
+
+  const shared = [
+    {title:"Event Diversification — High Impact", text:"Combining IPOs and rights issues expands the opportunity set from ~5 events to 15+. Rights issues from established companies (CIB, EFG Hermes, Abu Qir) provide lower-risk exposure with built-in discounts (15-30% below market). The blended universe reduces single-event dependency."},
+    {title:"T-Bill Buffer — High Impact", text:"With Egyptian T-bill rates at 20-26% during this period, even a 10-20% cash buffer earns substantial risk-free income. This is the most reliable lever for cushioning equity drawdowns while still generating return."},
+    {title:"Position Cap — Essential at 15%", text:"With the expanded universe of 15+ events, concentration risk is better managed. However, a 15% cap still prevents any single failed event from destroying more than 15% of the fund. Non-negotiable for the live product."},
+    {title:"Core Finding: Real Returns Are the Only Metric That Matters", text:"Multiple configurations show positive nominal EGP returns but negative real returns after Egypt's 30-40% inflation. Any fund design that doesn't clear the inflation hurdle is destroying investor wealth regardless of the headline number."},
+  ];
+
+  const modelB = [
+    {title:"Entry Timing — Day 1 vs Day 5", text:"Buying on Day 1 captures the earliest market price but exposes the fund to first-day volatility. Day 5 allows initial hype to settle, often resulting in a lower entry price. Day 30 reduces volatility further but risks missing momentum in strong listings. Backtests suggest Day 1 or Day 5 are optimal for this cohort."},
+    {title:"Downside Protection — Stop-Loss at 20%", text:"A trailing stop-loss at 20% limits damage from individual holdings that deteriorate after purchase. Without downside protection, a single large loser (e.g., a post-listing collapse) can drag the entire fund. The stop-loss is especially valuable in a concentrated portfolio with few events."},
+    {title:"Rebalancing Frequency — Quarterly Preferred", text:"Quarterly rebalancing maintains target weights without excessive turnover. On-event rebalancing triggers whenever a new listing enters, which can cause frequent small trades. For a small fund with limited liquidity in EGX-listed stocks, quarterly strikes the right balance between discipline and cost."},
+  ];
+
+  const modelC = [
+    {title:"Day-1 Flip is Dominant for IPOs", text:"For IPO allocations, flipping on day 1 captures the listing pop while the oversubscription-driven hype is strongest. However, for rights issues the \"Hold\" strategy often works better due to the built-in discount providing a margin of safety. Consider a hybrid approach: flip IPOs, hold rights issues."},
+    {title:"Rights Issues — Built-in Margin of Safety", text:"Rights issues are offered at 15-30% discounts to market price. Even with lower oversubscription (1.8-7x vs 6-68x for IPOs), the discount provides an immediate unrealized gain on allocation. The fund benefits most when it can subscribe to rights across multiple sectors. Lower oversubscription also means higher fill rates, making allocation more predictable than IPOs."},
+    {title:"Allocation Track — Retail vs Institutional", text:"Retail subscriptions typically face higher oversubscription (smaller allocation) but have access to the retail tranche which is sometimes more generous per-applicant. Institutional track offers larger absolute allocations but with stricter regulatory requirements. The choice significantly affects capital efficiency and idle cash periods."},
+    {title:"Cash Drag Between Events", text:"In Model C, large portions of the fund sit idle between subscription events. With only 6-10 events over 4 years, idle periods can span months. The T-bill buffer is not just a safety feature here — it's the primary return driver during dead periods. Maximizing the buffer between events is critical."},
+  ];
+
+  const recs = [...(isB ? modelB : modelC), ...shared];
+  div.innerHTML = recs.map(r => `<div class="rec-card"><h4>${r.title}</h4><p>${r.text}</p></div>`).join("");
 }
 
 function renderUniverse(metrics) {
