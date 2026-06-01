@@ -38,7 +38,11 @@
     .controls { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:20px 24px; margin-bottom:24px; }
     .controls-title { font-family:Georgia,serif; font-size:16px; color:var(--gold); margin-bottom:16px; font-weight:bold; }
     .controls-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; }
-    .control-group label { display:block; font-size:11px; font-weight:bold; color:var(--gold-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; }
+    .control-group label { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:bold; color:var(--gold-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; }
+    .info-icon { display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border-radius:50%; background:var(--border); color:var(--text-muted); font-size:9px; font-weight:bold; font-style:italic; cursor:help; position:relative; flex-shrink:0; font-family:Georgia,serif; }
+    .info-icon:hover { background:var(--gold-dim); color:var(--bg-primary); }
+    .info-icon .info-tooltip { display:none; position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:var(--bg-secondary); border:1px solid var(--gold-dim); border-radius:6px; padding:8px 10px; font-size:11px; font-weight:normal; font-style:normal; color:var(--text-secondary); white-space:normal; width:200px; text-transform:none; letter-spacing:0; line-height:1.4; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.4); }
+    .info-icon:hover .info-tooltip { display:block; }
     .control-group select { width:100%; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-primary); padding:8px 10px; border-radius:5px; font-size:13px; font-family:inherit; }
     .control-group select:focus { outline:none; border-color:var(--gold); }
     .control-group select option { background:var(--bg-secondary); color:var(--text-primary); }
@@ -50,7 +54,7 @@
 
     .kpi-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:14px; margin-bottom:24px; }
     .kpi-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:16px; text-align:center; }
-    .kpi-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+    .kpi-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; display:flex; align-items:center; justify-content:center; gap:4px; }
     .kpi-value { font-family:Georgia,serif; font-size:26px; font-weight:bold; }
     .kpi-value.positive { color:var(--green); }
     .kpi-value.negative { color:var(--red); }
@@ -117,19 +121,19 @@
       <div class="brand-sub">QUANTITATIVE STRATEGY &middot; PRODUCT R&amp;D</div>
     </div>
     <div style="text-align:right;font-size:12px;color:var(--text-muted);">
-      EGX &middot; 2021–2024 IPO cohort<br>Models B &amp; C
+      EGX &middot; 2021–2024 cohort<br>IPOs + Rights Issues
     </div>
   </div>
-  <h1>EGX IPO Mutual Fund <span>Simulator</span></h1>
-  <p class="header-desc">Interactive backtest — toggle any fund feature to see its effect on return, risk, and real-money outcomes. Simulation runs live in your browser.</p>
+  <h1>EGX Equity Events Mutual Fund <span>Simulator</span></h1>
+  <p class="header-desc">Interactive backtest — IPOs &amp; Rights Issues. Toggle any fund feature to see its effect on return, risk, and real-money outcomes.</p>
 </div>
 
 <div class="container">
   <div id="app-loading" class="loading">Loading market data...</div>
   <div id="app" style="display:none;">
     <div class="model-tabs" id="modelTabs">
-      <div class="model-tab active" data-model="B" onclick="selectModel('B')">Model B — Active "Recently-Listed"</div>
-      <div class="model-tab" data-model="C" onclick="selectModel('C')">Model C — IPO-Allocation</div>
+      <div class="model-tab active" data-model="B" onclick="selectModel('B')">Model B — Secondary Market (Post-Listing)</div>
+      <div class="model-tab" data-model="C" onclick="selectModel('C')">Model C — Subscription (Pre-Listing)</div>
     </div>
 
     <div class="controls">
@@ -187,18 +191,18 @@
     </div>
 
     <div id="allocSection" style="display:none;">
-      <h2 class="section-heading"><span>IPO Allocation</span> Details</h2>
+      <h2 class="section-heading"><span>Event Allocation</span> Details</h2>
       <div class="chart-card" style="margin-bottom:24px;">
-        <table class="data-table" id="allocTable"><thead><tr><th>Date</th><th>Ticker</th><th>Offer Price</th><th>Subscribed</th><th>Fill Rate</th><th>Shares</th></tr></thead><tbody></tbody></table>
+        <table class="data-table" id="allocTable"><thead><tr><th>Date</th><th>Type</th><th>Ticker</th><th>Offer Price</th><th>Subscribed</th><th>Fill Rate</th><th>Shares</th></tr></thead><tbody></tbody></table>
       </div>
     </div>
 
     <h2 class="section-heading"><span>Feature</span> Recommendations</h2>
     <div id="recsSection" class="chart-card" style="margin-bottom:24px;"></div>
 
-    <h2 class="section-heading"><span>IPO</span> Universe</h2>
+    <h2 class="section-heading"><span>Event</span> Universe</h2>
     <div class="chart-card" style="margin-bottom:24px;">
-      <table class="data-table" id="universeTable"><thead><tr><th>Ticker</th><th>Company</th><th>Listed</th><th>Offer Price</th><th>Raise (EGP)</th><th>Sector</th><th>Oversub (Retail)</th></tr></thead><tbody></tbody></table>
+      <table class="data-table" id="universeTable"><thead><tr><th>Type</th><th>Ticker</th><th>Company</th><th>Date</th><th>Offer Price</th><th>Raise (EGP)</th><th>Sector</th><th>Oversub (Retail)</th></tr></thead><tbody></tbody></table>
     </div>
   </div>
 </div>
@@ -282,13 +286,21 @@ function runSimulation(config) {
   const allocatedIpos = new Set();
   let lastRebalance = startDate;
 
-  function getPrice(ticker, date) { return priceLookup[ticker]?.[date] ?? null; }
+  function getPrice(ticker, date) {
+    const series = priceLookup[ticker];
+    if (!series) return null;
+    if (series[date] !== undefined) return series[date];
+    let best = null;
+    for (const d in series) { if (d <= date && (best === null || d > best)) best = d; }
+    return best ? series[best] : null;
+  }
   function getTbillDaily(date) { const r = nearest(tbillLookup, date); return (r || 0.20) / 252; }
   function daysBetween(a, b) { return (new Date(b) - new Date(a)) / 86400000; }
 
   function eligibleCompanies(date) {
     const entryDelay = {day1:0, day5:5, day30:30}[config.entry_timing] || 0;
     return universe.filter(co => {
+      if (!config.event_types.includes(co.event_type || "ipo")) return false;
       if (co.listing_date > date) return false;
       const age = daysBetween(co.listing_date, date);
       if (age > windowDays) return false;
@@ -435,24 +447,38 @@ function runSimulation(config) {
       for (const t in positions) { const p = getPrice(t, date); if (p) totalVal += positions[t].shares * p; }
       cash -= totalVal * mgmtFeeDaily;
 
-      // New IPO allocations
+      // New event allocations (IPOs, capital increases, rights issues)
       for (const co of universe) {
         if (allocatedIpos.has(co.ticker)) continue;
         if (co.listing_date !== date || co.listing_date < startDate) continue;
+        if (!config.event_types.includes(co.event_type || "ipo")) continue;
 
         const oversub = config.allocation_track === "retail" ? (co.oversub_retail || 10) : (co.oversub_inst || 5);
         const allocPct = config.allocation_track === "retail" ? co.retail_alloc_pct : (1 - co.retail_alloc_pct);
         const availableCash = cash * (1 - config.tbill_buffer);
-        const subAmount = Math.min(availableCash * 0.80, co.raise_egp * allocPct * 0.10);
-        const fillRate = 1 / oversub;
-        const allocValue = subAmount * fillRate;
-        const allocShares = allocValue / co.offer_price;
+
+        let subAmount, fillRate, allocValue, allocShares;
+        const evType = co.event_type || "ipo";
+
+        if (evType === "rights_issue") {
+          // Rights issues: lower oversub, fund subscribes to available rights at discount
+          subAmount = Math.min(availableCash * 0.60, co.raise_egp * allocPct * 0.15);
+          fillRate = 1 / Math.max(1, oversub);
+          allocValue = subAmount * fillRate;
+          allocShares = allocValue / co.offer_price;
+        } else {
+          // IPO: original logic
+          subAmount = Math.min(availableCash * 0.80, co.raise_egp * allocPct * 0.10);
+          fillRate = 1 / oversub;
+          allocValue = subAmount * fillRate;
+          allocShares = allocValue / co.offer_price;
+        }
 
         if (allocShares < 1) { allocatedIpos.add(co.ticker); continue; }
         cash -= allocValue;
         positions[co.ticker] = {shares:allocShares, costBasis:co.offer_price, entryDate:date, sector:co.sector};
         allocatedIpos.add(co.ticker);
-        trades.push({date, ticker:co.ticker, action:"ipo_alloc", price:co.offer_price, shares:allocShares, subscription:subAmount, fillRate});
+        trades.push({date, ticker:co.ticker, action:evType==="ipo"?"ipo_alloc":evType+"_alloc", price:co.offer_price, shares:allocShares, subscription:subAmount, fillRate, eventType:evType});
       }
 
       // Flip / exit
@@ -486,7 +512,7 @@ function runSimulation(config) {
   const contributions = {};
   for (const t of trades) {
     if (!contributions[t.ticker]) contributions[t.ticker] = {invested:0, returned:0};
-    if (t.action === "buy" || t.action === "ipo_alloc") contributions[t.ticker].invested += t.shares * t.price;
+    if (t.action === "buy" || t.action.endsWith("_alloc")) contributions[t.ticker].invested += t.shares * t.price;
     if (t.action === "sell") contributions[t.ticker].returned += t.shares * t.price;
   }
   // Add unrealized
@@ -503,7 +529,7 @@ function runSimulation(config) {
     holdingContribs[t] = (contributions[t].returned - contributions[t].invested) / initNav;
   }
 
-  return { dates:datesSeries, nav:navSeries, cash:cashSeries, trades, holdingContribs, allocDetails: trades.filter(t=>t.action==="ipo_alloc") };
+  return { dates:datesSeries, nav:navSeries, cash:cashSeries, trades, holdingContribs, allocDetails: trades.filter(t=>t.action.endsWith("_alloc")) };
 }
 
 // --- METRICS ---
@@ -630,23 +656,24 @@ function buildControls() {
   grid.innerHTML = "";
 
   const common = [
-    {key:"inception_date", label:"Inception Date", options:[{v:"2022-01-01",l:"Jan 2022"},{v:"2022-07-01",l:"Jul 2022"},{v:"2023-01-01",l:"Jan 2023"}]},
-    {key:"tbill_buffer", label:"T-Bill Buffer", options:[{v:"0.10",l:"10%"},{v:"0",l:"0%"},{v:"0.20",l:"20%"}]},
-    {key:"downside_protection", label:"Downside Protection", options:[{v:"none",l:"None"},{v:"stop15",l:"Stop 15%"},{v:"stop20",l:"Stop 20%"}]},
+    {key:"event_types", label:"Event Types", info:"Which equity events the fund participates in. IPOs are new listings on the exchange. Rights Issues are capital increases where listed companies issue new shares, typically at a discount to existing holders.", options:[{v:"all",l:"All Events"},{v:"ipo_only",l:"IPOs Only"},{v:"ipo_ri",l:"IPOs & Rights Issues"}]},
+    {key:"inception_date", label:"Inception Date", info:"The simulated fund launch date. Earlier dates give more backtest history but include different market regimes.", options:[{v:"2022-01-01",l:"Jan 2022"},{v:"2022-07-01",l:"Jul 2022"},{v:"2023-01-01",l:"Jan 2023"}]},
+    {key:"tbill_buffer", label:"T-Bill Buffer", info:"Percentage of fund AUM kept in Egyptian T-bills as a cash reserve. Earns risk-free yield (20-26%) and cushions equity drawdowns.", options:[{v:"0.10",l:"10%"},{v:"0",l:"0%"},{v:"0.20",l:"20%"}]},
+    {key:"downside_protection", label:"Downside Protection", info:"Automatic stop-loss trigger. If a position drops by this percentage from its cost basis, it is sold to limit further losses.", options:[{v:"none",l:"None"},{v:"stop15",l:"Stop 15%"},{v:"stop20",l:"Stop 20%"}]},
   ];
   const bOnly = [
-    {key:"entry_timing", label:"Entry Timing", options:[{v:"day1",l:"Day 1"},{v:"day5",l:"Day 5"},{v:"day30",l:"Day 30"}]},
-    {key:"weighting", label:"Weighting", options:[{v:"equal",l:"Equal Weight"},{v:"offersize",l:"Offer Size"}]},
-    {key:"position_cap", label:"Position Cap", options:[{v:"0.15",l:"15%"},{v:"none",l:"No Cap"},{v:"0.20",l:"20%"}]},
-    {key:"sector_cap", label:"Sector Cap", options:[{v:"none",l:"No Cap"},{v:"0.30",l:"30%"}]},
-    {key:"rebalance_freq", label:"Rebalance", options:[{v:"quarterly",l:"Quarterly"},{v:"on_new_listing",l:"On New Listing"}]},
-    {key:"lockup_avoidance", label:"Lock-up Avoidance", options:[{v:"false",l:"Off"},{v:"true",l:"On"}]},
-    {key:"holding_period", label:"Holding Period", options:[{v:"none",l:"Until Aged Out"},{v:"12",l:"12 months"},{v:"24",l:"24 months"}]},
+    {key:"entry_timing", label:"Entry Timing", info:"How many days after an IPO listing the fund waits before buying. Waiting avoids first-day volatility but may miss the initial pop.", options:[{v:"day1",l:"Day 1"},{v:"day5",l:"Day 5"},{v:"day30",l:"Day 30"}]},
+    {key:"weighting", label:"Weighting", info:"How capital is allocated across holdings. Equal weight gives each stock the same share; Offer Size weights by IPO raise amount.", options:[{v:"equal",l:"Equal Weight"},{v:"offersize",l:"Offer Size"}]},
+    {key:"position_cap", label:"Position Cap", info:"Maximum percentage of the fund that any single stock can occupy. Limits concentration risk from one holding dominating the portfolio.", options:[{v:"0.15",l:"15%"},{v:"none",l:"No Cap"},{v:"0.20",l:"20%"}]},
+    {key:"sector_cap", label:"Sector Cap", info:"Maximum percentage of the fund allocated to any single sector. Prevents over-exposure to one industry.", options:[{v:"none",l:"No Cap"},{v:"0.30",l:"30%"}]},
+    {key:"rebalance_freq", label:"Rebalance", info:"How often the portfolio is rebalanced to target weights. Quarterly rebalances on a schedule; On New Listing rebalances whenever a new IPO enters the universe.", options:[{v:"quarterly",l:"Quarterly"},{v:"on_new_listing",l:"On New Listing"}]},
+    {key:"lockup_avoidance", label:"Lock-up Avoidance", info:"When enabled, the fund sells a position 10 days before the insider lock-up period expires, avoiding the typical selling pressure when insiders can dump shares.", options:[{v:"false",l:"Off"},{v:"true",l:"On"}]},
+    {key:"holding_period", label:"Holding Period", info:"Maximum time a stock is held before being sold. 'Until Aged Out' holds until the stock exits the IPO window (3 years).", options:[{v:"none",l:"Until Aged Out"},{v:"12",l:"12 months"},{v:"24",l:"24 months"}]},
   ];
   const cOnly = [
-    {key:"flip_strategy", label:"Flip Strategy", options:[{v:"flip_day1",l:"Flip Day 1"},{v:"flip_week1",l:"Flip Week 1"},{v:"hold",l:"Hold"}]},
-    {key:"allocation_track", label:"Allocation Track", options:[{v:"retail",l:"Retail"},{v:"institutional",l:"Institutional"}]},
-    {key:"holding_period", label:"Holding Period", options:[{v:"none",l:"No Limit"},{v:"6",l:"6 months"},{v:"12",l:"12 months"}]},
+    {key:"flip_strategy", label:"Flip Strategy", info:"When to sell IPO allocations after listing. Day 1 captures the listing pop immediately; Week 1 waits for short-term momentum; Hold keeps the position longer.", options:[{v:"flip_day1",l:"Flip Day 1"},{v:"flip_week1",l:"Flip Week 1"},{v:"hold",l:"Hold"}]},
+    {key:"allocation_track", label:"Allocation Track", info:"Which investor category the fund subscribes under. Retail has higher oversubscription but a dedicated allocation tranche; Institutional has lower oversub but competes with larger players.", options:[{v:"retail",l:"Retail"},{v:"institutional",l:"Institutional"}]},
+    {key:"holding_period", label:"Holding Period", info:"Maximum time an IPO allocation is held if not flipped. After this period, the position is sold regardless of performance.", options:[{v:"none",l:"No Limit"},{v:"6",l:"6 months"},{v:"12",l:"12 months"}]},
   ];
 
   const levers = [...common, ...(currentModel === "B" ? bOnly : cOnly)];
@@ -654,7 +681,7 @@ function buildControls() {
     const div = document.createElement("div");
     div.className = "control-group";
     const lbl = document.createElement("label");
-    lbl.textContent = lever.label;
+    lbl.innerHTML = `${lever.label} <span class="info-icon">i<span class="info-tooltip">${lever.info}</span></span>`;
     const sel = document.createElement("select");
     sel.id = "ctrl_" + lever.key;
     sel.onchange = runAndRender;
@@ -668,11 +695,19 @@ function getConfig() {
   const posCapRaw = get("position_cap");
   const holdRaw = get("holding_period");
 
+  const eventTypesRaw = get("event_types") || "all";
+  const eventTypesMap = {
+    all: ["ipo","rights_issue"],
+    ipo_only: ["ipo"],
+    ipo_ri: ["ipo","rights_issue"],
+  };
+
   return {
     model: currentModel,
     inception_date: get("inception_date") || "2022-01-01",
     management_fee: 0.02,
     window_years: 3,
+    event_types: eventTypesMap[eventTypesRaw] || eventTypesMap.all,
     tbill_buffer: parseFloat(get("tbill_buffer") || "0.10"),
     downside_protection: get("downside_protection") || "none",
     entry_timing: get("entry_timing") || "day1",
@@ -733,16 +768,16 @@ function renderVerdict(m, config) {
 
 function renderKPIs(m) {
   const kpis = [
-    {label:"CAGR (Nominal)",value:m.cagrNom.toFixed(1)+"%",cls:m.cagrNom>=0?"positive":"negative",sub:"EGP"},
-    {label:"Real Return (CPI)",value:m.cagrReal.toFixed(1)+"%",cls:m.cagrReal>=0?"positive":"negative",sub:"Purchasing power"},
-    {label:"USD Return",value:m.cagrUsd.toFixed(1)+"%",cls:m.cagrUsd>=0?"positive":"negative",sub:"Hard currency"},
-    {label:"Max Drawdown",value:m.maxDD.toFixed(1)+"%",cls:"negative",sub:"Peak-to-trough"},
-    {label:"Sharpe Ratio",value:m.sharpe.toFixed(2),cls:m.sharpe>=0?"positive":"negative",sub:"vs T-bills"},
-    {label:"Alpha vs EGX30",value:(m.alpha>=0?"+":"")+m.alpha.toFixed(1)+"pp",cls:m.alpha>=0?"positive":"negative",sub:"Annualized"},
-    {label:"Hit Rate",value:m.hitRate.toFixed(0)+"%",cls:m.hitRate>=50?"positive":"negative",sub:"Winners / Total"},
-    {label:"Volatility",value:m.vol.toFixed(1)+"%",cls:"",sub:"Annualized"},
+    {label:"CAGR (Nominal)",value:m.cagrNom.toFixed(1)+"%",cls:m.cagrNom>=0?"positive":"negative",sub:"EGP",info:"Compound Annual Growth Rate in Egyptian Pounds, before adjusting for inflation. The headline return number."},
+    {label:"Real Return (CPI)",value:m.cagrReal.toFixed(1)+"%",cls:m.cagrReal>=0?"positive":"negative",sub:"Purchasing power",info:"Annual return after stripping out inflation (CPI). Shows whether the fund actually grew purchasing power or just kept up with rising prices."},
+    {label:"USD Return",value:m.cagrUsd.toFixed(1)+"%",cls:m.cagrUsd>=0?"positive":"negative",sub:"Hard currency",info:"Annual return converted to US Dollars, accounting for EGP devaluation. The true international benchmark for Egyptian investors."},
+    {label:"Max Drawdown",value:m.maxDD.toFixed(1)+"%",cls:"negative",sub:"Peak-to-trough",info:"Largest peak-to-trough decline in fund value. Measures the worst loss an investor would have experienced if they bought at the top."},
+    {label:"Sharpe Ratio",value:m.sharpe.toFixed(2),cls:m.sharpe>=0?"positive":"negative",sub:"vs T-bills",info:"Risk-adjusted return: excess return over T-bills divided by volatility. Above 1.0 is good; below 0 means T-bills beat the fund."},
+    {label:"Alpha vs EGX30",value:(m.alpha>=0?"+":"")+m.alpha.toFixed(1)+"pp",cls:m.alpha>=0?"positive":"negative",sub:"Annualized",info:"Annualized outperformance vs the EGX30 index. Positive alpha means the fund beat the broader market on a return basis."},
+    {label:"Hit Rate",value:m.hitRate.toFixed(0)+"%",cls:m.hitRate>=50?"positive":"negative",sub:"Winners / Total",info:"Percentage of individual holdings that generated a positive return. Above 50% means more winners than losers."},
+    {label:"Volatility",value:m.vol.toFixed(1)+"%",cls:"",sub:"Annualized",info:"Annualized standard deviation of daily returns. Higher volatility means larger day-to-day swings in fund value."},
   ];
-  document.getElementById("kpiRow").innerHTML = kpis.map(k => `<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-value ${k.cls}">${k.value}</div><div class="kpi-sub">${k.sub}</div></div>`).join("");
+  document.getElementById("kpiRow").innerHTML = kpis.map(k => `<div class="kpi-card"><div class="kpi-label">${k.label} <span class="info-icon">i<span class="info-tooltip">${k.info}</span></span></div><div class="kpi-value ${k.cls}">${k.value}</div><div class="kpi-sub">${k.sub}</div></div>`).join("");
 }
 
 function setNavView(v) {
@@ -807,10 +842,15 @@ function renderAllocTable(result) {
   const details = result.allocDetails || [];
   if (details.length === 0) { section.style.display = "none"; return; }
   section.style.display = "block";
-  document.querySelector("#allocTable tbody").innerHTML = details.map(a=>`
-    <tr><td>${a.date}</td><td style="font-weight:bold">${a.ticker}</td><td>${a.price.toFixed(2)} EGP</td>
+  const typeLabel = {ipo:"IPO", rights_issue:"Rights Issue"};
+  const typeColor = {ipo:"var(--gold)", rights_issue:"#9C7EBD"};
+  document.querySelector("#allocTable tbody").innerHTML = details.map(a=>{
+    const et = a.eventType || "ipo";
+    return `<tr><td>${a.date}</td><td style="font-weight:bold;color:${typeColor[et]||'var(--gold)'};font-size:11px">${typeLabel[et]||et}</td>
+    <td style="font-weight:bold">${a.ticker}</td><td>${a.price.toFixed(2)} EGP</td>
     <td>${(a.subscription/1e6).toFixed(2)}M EGP</td><td>${(a.fillRate*100).toFixed(1)}%</td>
-    <td>${Math.round(a.shares).toLocaleString()}</td></tr>`).join("");
+    <td>${Math.round(a.shares).toLocaleString()}</td></tr>`;
+  }).join("");
 }
 
 // ── PRICE PROJECTION ──────────────────────────────────────────
@@ -984,18 +1024,21 @@ function renderPriceProjection(result, metrics) {
 function renderRecommendations() {
   const div = document.getElementById("recsSection");
   div.innerHTML = `
-    <div class="rec-card"><h4>T-Bill Buffer — High Impact</h4><p>With Egyptian T-bill rates at 20-26% during this period, even a 10-20% cash buffer earns substantial risk-free income. This is the most reliable lever for cushioning equity drawdowns while still generating return. The "T-Bill Shield" feature is strongly recommended for both models.</p></div>
-    <div class="rec-card"><h4>Entry Timing — Moderate Impact</h4><p>Waiting 5-30 days after listing avoids first-day volatility but may miss the IPO pop. The optimal entry depends on the specific stock — the simulation shows mixed results, suggesting a rule-based approach (e.g. wait for the first 5-day close) is more robust than always buying day 1.</p></div>
-    <div class="rec-card"><h4>Downside Protection — Conditional</h4><p>A 15-20% trailing stop-loss limits worst-case damage from individual positions. However, in the volatile EGX environment, it can also trigger premature exits on stocks that recover. Best used as a safety net (20% stop) rather than an aggressive cut (15%).</p></div>
-    <div class="rec-card"><h4>Position Cap — Essential at 15%</h4><p>With only 5-6 stocks in the EGX IPO universe, concentration risk is the biggest structural danger. A 15% position cap ensures no single failed IPO can destroy more than 15% of the fund. Non-negotiable for the live product.</p></div>
-    <div class="rec-card"><h4>Model C: Day-1 Flip is Dominant</h4><p>For the IPO-Allocation model, flipping on day 1 captures the listing pop and immediately recycles capital into T-bills. Given low allocation rates (1-15% fill due to oversubscription), the fund is effectively a T-bill fund with occasional equity kickers. This simplicity is a feature, not a bug.</p></div>
-    <div class="rec-card"><h4>Core Finding: Real Returns Are the Only Metric That Matters</h4><p>Multiple configurations show positive nominal EGP returns but negative real returns after Egypt's 30-40% inflation. Any fund design that doesn't clear the inflation hurdle is destroying investor wealth regardless of the headline number. The real-return and USD views in this simulator exist specifically to prevent this illusion.</p></div>
+    <div class="rec-card"><h4>Event Diversification — High Impact</h4><p>Combining IPOs and rights issues expands the opportunity set from ~5 events to 15+. Rights issues from established companies (CIB, EFG Hermes, Abu Qir) provide lower-risk exposure with built-in discounts (15-30% below market). The blended universe reduces single-event dependency.</p></div>
+    <div class="rec-card"><h4>Rights Issues — Built-in Margin of Safety</h4><p>Rights issues are offered at 15-30% discounts to market price. Even with lower oversubscription (1.8-7x vs 6-68x for IPOs), the discount provides an immediate unrealized gain on allocation. The fund benefits most when it can subscribe to rights across multiple sectors. Lower oversubscription also means higher fill rates, making allocation more predictable than IPOs.</p></div>
+    <div class="rec-card"><h4>T-Bill Buffer — High Impact</h4><p>With Egyptian T-bill rates at 20-26% during this period, even a 10-20% cash buffer earns substantial risk-free income. This is the most reliable lever for cushioning equity drawdowns while still generating return.</p></div>
+    <div class="rec-card"><h4>Position Cap — Essential at 15%</h4><p>With the expanded universe of 15+ events, concentration risk is better managed. However, a 15% cap still prevents any single failed event from destroying more than 15% of the fund. Non-negotiable for the live product.</p></div>
+    <div class="rec-card"><h4>Model C: Day-1 Flip is Dominant for IPOs</h4><p>For IPO allocations, flipping on day 1 captures the listing pop. However, for rights issues the "Hold" strategy often works better due to the built-in discount providing a margin of safety. Consider a hybrid approach.</p></div>
+    <div class="rec-card"><h4>Core Finding: Real Returns Are the Only Metric That Matters</h4><p>Multiple configurations show positive nominal EGP returns but negative real returns after Egypt's 30-40% inflation. Any fund design that doesn't clear the inflation hurdle is destroying investor wealth regardless of the headline number.</p></div>
   `;
 }
 
 function renderUniverse() {
+  const typeLabel = {ipo:"IPO", rights_issue:"Rights Issue"};
+  const typeColor = {ipo:"var(--gold)", rights_issue:"#9C7EBD"};
   document.querySelector("#universeTable tbody").innerHTML = RAW.universe.map(c=>`
-    <tr><td style="font-weight:bold;color:var(--gold)">${c.ticker}</td><td>${c.name}</td><td>${c.listing_date}</td>
+    <tr><td style="font-weight:bold;color:${typeColor[c.event_type]||'var(--gold)'};font-size:11px">${typeLabel[c.event_type]||c.event_type}</td>
+    <td style="font-weight:bold;color:var(--text-primary)">${c.ticker}</td><td>${c.name}</td><td>${c.listing_date}</td>
     <td>${c.offer_price.toFixed(2)} EGP</td><td>${(c.raise_egp/1e9).toFixed(2)}B</td><td>${c.sector}</td>
     <td>${c.oversub_retail ? c.oversub_retail+"x" : "—"}</td></tr>`).join("");
 }

@@ -43,7 +43,7 @@ tbill = [{"d": str(r["date"].date()) if hasattr(r["date"], "date") else str(r["d
 # Universe
 universe = []
 for co in EGX_IPO_UNIVERSE:
-    universe.append({
+    entry = {
         "ticker": co.ticker,
         "name": co.name,
         "listing_date": str(co.listing_date),
@@ -51,11 +51,19 @@ for co in EGX_IPO_UNIVERSE:
         "shares_offered": co.shares_offered,
         "raise_egp": co.raise_amount_egp,
         "sector": co.sector,
+        "event_type": co.event_type,
         "oversub_retail": co.oversubscription_retail,
         "oversub_inst": co.oversubscription_institutional,
         "lockup_days": co.lockup_days,
         "retail_alloc_pct": co.retail_allocation_pct,
-    })
+    }
+    if co.discount_pct is not None:
+        entry["discount_pct"] = co.discount_pct
+    if co.ratio is not None:
+        entry["ratio"] = co.ratio
+    if co.ex_date is not None:
+        entry["ex_date"] = str(co.ex_date)
+    universe.append(entry)
 
 output = {
     "prices": prices_by_ticker,

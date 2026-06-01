@@ -121,9 +121,14 @@ def generate_stock_prices_synthetic(
 
     n = len(dates)
     price = company.offer_price
+    ev = getattr(company, "event_type", "ipo")
 
-    first_day_pop = 1.0 + rng.uniform(0.05, 0.35)
-    daily_vol_base = rng.uniform(0.018, 0.035)
+    if ev == "rights_issue":
+        first_day_pop = 1.0 + rng.uniform(0.01, 0.10)
+        daily_vol_base = rng.uniform(0.010, 0.020)
+    else:
+        first_day_pop = 1.0 + rng.uniform(0.05, 0.35)
+        daily_vol_base = rng.uniform(0.018, 0.035)
 
     prices = np.zeros(n)
     volumes = np.zeros(n)
@@ -154,6 +159,9 @@ def generate_stock_prices_synthetic(
             drift += 0.0002
         elif company.sector in ("Sports / Entertainment",):
             drift -= 0.0001
+
+        if ev == "rights_issue":
+            drift += 0.0001
 
         ret = drift + vol * rng.randn()
         prices[i] = prices[i - 1] * np.exp(ret)
