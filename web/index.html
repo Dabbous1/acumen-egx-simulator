@@ -33,24 +33,90 @@
     .header h1 span { color:var(--gold-dim); }
     .header-desc { color:var(--text-secondary); font-size:14px; margin-top:6px; font-style:italic; }
 
-    .container { max-width:1400px; margin:0 auto; padding:24px 32px; }
+    .container { max-width:1920px; margin:0 auto; padding:24px 32px; }
 
-    .controls { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:20px 24px; margin-bottom:24px; }
-    .controls-title { font-family:Georgia,serif; font-size:16px; color:var(--gold); margin-bottom:16px; font-weight:bold; }
-    .controls-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; }
-    .control-group label { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:bold; color:var(--gold-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; }
+    .app-layout { display:flex; gap:24px; }
+
+    /* ── Sidebar ── */
+    .sidebar { width:280px; flex-shrink:0; position:sticky; top:24px; align-self:flex-start; max-height:calc(100vh - 48px); overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+    .sidebar::-webkit-scrollbar { width:5px; }
+    .sidebar::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+    .sidebar-section { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px; }
+    .sidebar-title { font-family:Georgia,serif; font-size:13px; color:var(--gold); margin-bottom:12px; font-weight:bold; text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; gap:6px; }
+
+    .main-content { flex:1; min-width:0; }
+
+    .controls-grid { display:flex; flex-direction:column; gap:10px; }
+    .control-group label { display:flex; align-items:center; gap:5px; font-size:10px; font-weight:bold; color:var(--gold-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
     .info-icon { display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border-radius:50%; background:var(--border); color:var(--text-muted); font-size:9px; font-weight:bold; font-style:italic; cursor:help; position:relative; flex-shrink:0; font-family:Georgia,serif; }
     .info-icon:hover { background:var(--gold-dim); color:var(--bg-primary); }
-    .info-icon .info-tooltip { display:none; position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:var(--bg-secondary); border:1px solid var(--gold-dim); border-radius:6px; padding:8px 10px; font-size:11px; font-weight:normal; font-style:normal; color:var(--text-secondary); white-space:normal; width:200px; text-transform:none; letter-spacing:0; line-height:1.4; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.4); }
+    .info-icon .info-tooltip { display:none; position:absolute; bottom:calc(100% + 6px); left:0; background:var(--bg-secondary); border:1px solid var(--gold-dim); border-radius:6px; padding:8px 10px; font-size:11px; font-weight:normal; font-style:normal; color:var(--text-secondary); white-space:normal; width:220px; text-transform:none; letter-spacing:0; line-height:1.4; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.4); }
     .info-icon:hover .info-tooltip { display:block; }
-    .control-group select { width:100%; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-primary); padding:8px 10px; border-radius:5px; font-size:13px; font-family:inherit; }
+    .control-group select { width:100%; background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-primary); padding:7px 10px; border-radius:5px; font-size:13px; font-family:inherit; }
     .control-group select:focus { outline:none; border-color:var(--gold); }
     .control-group select option { background:var(--bg-secondary); color:var(--text-primary); }
 
-    .model-tabs { display:flex; gap:8px; margin-bottom:16px; }
-    .model-tab { padding:10px 24px; border:1px solid var(--border); border-radius:6px; background:var(--bg-secondary); color:var(--text-muted); font-size:14px; font-weight:bold; cursor:pointer; transition:all 0.2s; }
+    .model-tabs { display:flex; flex-direction:column; gap:6px; margin-bottom:0; }
+    .model-tab { padding:9px 14px; border:1px solid var(--border); border-radius:6px; background:var(--bg-secondary); color:var(--text-muted); font-size:12px; font-weight:bold; cursor:pointer; transition:all 0.2s; text-align:center; }
     .model-tab:hover { border-color:var(--gold-dim); color:var(--text-secondary); }
     .model-tab.active { background:var(--gold-dim); color:var(--bg-primary); border-color:var(--gold); }
+
+    /* ── Universe panel (top of main content) ── */
+    .universe-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:18px 22px; margin-bottom:20px; }
+    .universe-panel-header { display:flex; align-items:center; gap:16px; margin-bottom:14px; }
+    .universe-panel-title { font-family:Georgia,serif; font-size:16px; color:var(--gold); font-weight:bold; margin:0; white-space:nowrap; }
+    .universe-count { font-size:12px; color:var(--text-muted); }
+
+    .universe-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .universe-table th { font-size:10px; color:var(--gold-dim); text-transform:uppercase; letter-spacing:0.8px; text-align:left; padding:8px 12px; border-bottom:1px solid var(--border); font-weight:bold; }
+    .universe-table td { padding:8px 12px; border-bottom:1px solid rgba(58,50,40,0.4); color:var(--text-secondary); }
+    .universe-table tr:hover td { background:var(--bg-card-hover); }
+    .universe-table .type-badge { display:inline-block; padding:2px 10px; border-radius:4px; font-size:10px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; }
+    .universe-table .badge-ipo { background:rgba(184,150,94,0.2); color:var(--gold); }
+    .universe-table .badge-ri { background:rgba(156,126,189,0.15); color:#9C7EBD; }
+
+    /* ── Right Documentation Sidebar ── */
+    .right-sidebar { width:340px; flex-shrink:0; position:sticky; top:24px; align-self:flex-start; max-height:calc(100vh - 48px); overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+    .right-sidebar::-webkit-scrollbar { width:5px; }
+    .right-sidebar::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+    .doc-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+    .doc-panel-header { padding:14px 16px 0 16px; }
+    .doc-panel-title { font-family:Georgia,serif; font-size:14px; color:var(--gold); font-weight:bold; margin:0 0 12px 0; display:flex; align-items:center; gap:8px; }
+    .doc-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); }
+    .doc-tab { flex:1; padding:9px 8px; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:0.6px; color:var(--text-muted); text-align:center; cursor:pointer; border-bottom:2px solid transparent; transition:all 0.15s; background:none; border-top:none; border-left:none; border-right:none; font-family:inherit; }
+    .doc-tab:hover { color:var(--text-secondary); background:rgba(184,150,94,0.05); }
+    .doc-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+    .doc-tab-body { padding:16px; display:none; }
+    .doc-tab-body.active { display:block; }
+
+    .doc-tab-body p { font-size:12.5px; color:var(--text-secondary); line-height:1.65; margin-bottom:10px; }
+    .doc-tab-body p:last-child { margin-bottom:0; }
+    .doc-tab-body .doc-label { font-size:10px; font-weight:bold; color:var(--gold-dim); text-transform:uppercase; letter-spacing:1px; margin:14px 0 6px 0; }
+    .doc-tab-body .doc-label:first-child { margin-top:0; }
+    .doc-tab-body ul { font-size:12px; color:var(--text-secondary); line-height:1.6; padding-left:16px; margin-bottom:10px; }
+    .doc-tab-body li { margin-bottom:4px; }
+    .doc-tab-body code { background:var(--bg-secondary); padding:1px 5px; border-radius:3px; font-size:11px; color:var(--gold-light); font-family:'Consolas','Courier New',monospace; }
+    .doc-tab-body .doc-highlight { background:rgba(184,150,94,0.1); border-left:3px solid var(--gold-dim); padding:8px 12px; border-radius:0 4px 4px 0; margin:10px 0; font-size:12px; color:var(--text-secondary); line-height:1.5; }
+    .doc-tab-body .doc-step { display:flex; gap:10px; margin-bottom:10px; }
+    .doc-tab-body .doc-step-num { width:22px; height:22px; border-radius:50%; background:var(--gold-dim); color:var(--bg-primary); font-size:11px; font-weight:bold; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+    .doc-tab-body .doc-step-text { font-size:12px; color:var(--text-secondary); line-height:1.5; }
+
+    .doc-model-badge { display:inline-block; padding:2px 8px; border-radius:3px; font-size:10px; font-weight:bold; letter-spacing:0.5px; }
+    .doc-model-badge.model-b { background:rgba(184,150,94,0.2); color:var(--gold); }
+    .doc-model-badge.model-c { background:rgba(156,126,189,0.15); color:#9C7EBD; }
+
+    @media (max-width:1400px) {
+      .right-sidebar { width:300px; }
+    }
+    @media (max-width:1100px) {
+      .app-layout { flex-direction:column; }
+      .sidebar { width:100%; position:static; max-height:none; }
+      .right-sidebar { width:100%; position:static; max-height:none; order:99; }
+      .controls-grid { flex-direction:row; flex-wrap:wrap; }
+      .controls-grid .control-group { flex:1 1 180px; }
+      .model-tabs { flex-direction:row; }
+    }
 
     .kpi-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:14px; margin-bottom:24px; }
     .kpi-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:16px; text-align:center; }
@@ -88,10 +154,6 @@
     .price-hero-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
     .price-hero-value { font-family:Georgia,serif; font-size:32px; font-weight:bold; }
     .price-hero-sub { font-size:12px; color:var(--text-muted); margin-top:2px; }
-    .price-summary { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; margin-bottom:20px; }
-    .price-stat { background:var(--bg-secondary); border-radius:6px; padding:12px; text-align:center; }
-    .price-stat-label { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
-    .price-stat-value { font-family:Georgia,serif; font-size:18px; font-weight:bold; }
     .price-table-wrap { max-height:400px; overflow-y:auto; border:1px solid var(--border); border-radius:6px; }
     .price-table-wrap::-webkit-scrollbar { width:6px; }
     .price-table-wrap::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
@@ -107,7 +169,6 @@
 
     @media (max-width:900px) {
       .chart-section { grid-template-columns:1fr; }
-      .controls-grid { grid-template-columns:1fr 1fr; }
       .kpi-row { grid-template-columns:repeat(2,1fr); }
     }
   </style>
@@ -131,78 +192,94 @@
 <div class="container">
   <div id="app-loading" class="loading">Loading market data...</div>
   <div id="app" style="display:none;">
-    <div class="model-tabs" id="modelTabs">
-      <div class="model-tab active" data-model="B" onclick="selectModel('B')">Model B — Secondary Market (Post-Listing)</div>
-      <div class="model-tab" data-model="C" onclick="selectModel('C')">Model C — Subscription (Pre-Listing)</div>
-    </div>
+    <div class="app-layout">
 
-    <div class="controls">
-      <div class="controls-title"><span class="running-indicator" id="runIndicator" style="display:none;"></span>Feature Levers</div>
-      <div class="controls-grid" id="controlsGrid"></div>
-    </div>
-
-    <div id="verdictBanner" class="verdict-banner pass"></div>
-    <div class="kpi-row" id="kpiRow"></div>
-
-    <div class="chart-section">
-      <div class="chart-card full">
-        <div class="chart-title">Fund NAV vs EGPT (VanEck Egypt ETF, in EGP)</div>
-        <div class="chart-toggle" id="navToggle">
-          <button class="active" onclick="setNavView('nominal')">Nominal EGP</button>
-          <button onclick="setNavView('real')">Real (CPI)</button>
-          <button onclick="setNavView('usd')">USD</button>
+      <!-- ═══ SIDEBAR ═══ -->
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-title">Model</div>
+          <div class="model-tabs" id="modelTabs">
+            <div class="model-tab active" data-model="B" onclick="selectModel('B')">Model B — Secondary Market</div>
+            <div class="model-tab" data-model="C" onclick="selectModel('C')">Model C — Subscription</div>
+          </div>
         </div>
-        <canvas id="navChart" height="90"></canvas>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Drawdown</div>
-        <canvas id="ddChart" height="120"></canvas>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Per-Holding Contribution</div>
-        <canvas id="contribChart" height="120"></canvas>
-      </div>
-    </div>
 
-    <h2 class="section-heading"><span>Fund Unit Price</span> Projection</h2>
-    <div class="price-card" id="priceProjection">
-      <div class="price-header" id="priceHeader"></div>
-      <div class="price-summary" id="priceSummary"></div>
-      <div class="chart-card" style="margin-bottom:20px;padding:16px;">
-        <div class="chart-title">Unit Price Over Time</div>
-        <div class="chart-toggle" id="priceChartToggle">
-          <button class="active" onclick="setPriceView('nominal')">Nominal EGP</button>
-          <button onclick="setPriceView('real')">Real (CPI)</button>
-          <button onclick="setPriceView('usd')">USD</button>
+        <div class="sidebar-section">
+          <div class="sidebar-title"><span class="running-indicator" id="runIndicator" style="display:none;"></span>Feature Levers</div>
+          <div class="controls-grid" id="controlsGrid"></div>
         </div>
-        <canvas id="priceChart" height="80"></canvas>
+
+      </aside>
+
+      <!-- ═══ MAIN CONTENT ═══ -->
+      <div class="main-content">
+        <div class="universe-panel" id="universePanel">
+          <div class="universe-panel-header">
+            <h2 class="universe-panel-title">Fund Universe</h2>
+            <div class="universe-count" id="universeCount"></div>
+          </div>
+          <table class="universe-table" id="universeMini">
+            <thead><tr><th>Type</th><th>Ticker</th><th>Company</th><th>Listed</th><th>Offer Price</th><th>Raise</th><th>Sector</th><th>Contribution</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div id="verdictBanner" class="verdict-banner pass"></div>
+
+        <div class="price-card" id="priceProjection">
+          <div class="price-header" id="priceHeader"></div>
+          <div class="kpi-row" id="kpiRow"></div>
+          <div class="chart-card" style="margin-bottom:20px;padding:16px;">
+            <div class="chart-title">Unit Price Over Time</div>
+            <div class="chart-toggle" id="priceChartToggle">
+              <button class="active" onclick="setPriceView('nominal')">Nominal EGP</button>
+              <button onclick="setPriceView('real')">Real (CPI)</button>
+              <button onclick="setPriceView('usd')">USD</button>
+            </div>
+            <canvas id="priceChart" height="80"></canvas>
+          </div>
+          <div class="price-table-wrap">
+            <table class="data-table" id="priceTable">
+              <thead><tr><th>Date</th><th>NAV/Unit (EGP)</th><th>NAV/Unit (Real)</th><th>NAV/Unit (USD)</th><th>Chg (EGP)</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="chart-section">
+          <div class="chart-card full">
+            <div class="chart-title">Fund NAV vs EGX30</div>
+            <div class="chart-toggle" id="navToggle">
+              <button class="active" onclick="setNavView('nominal')">Nominal EGP</button>
+              <button onclick="setNavView('real')">Real (CPI)</button>
+              <button onclick="setNavView('usd')">USD</button>
+            </div>
+            <canvas id="navChart" height="90"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Drawdown</div>
+            <canvas id="ddChart" height="120"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Per-Holding Contribution</div>
+            <canvas id="contribChart" height="120"></canvas>
+          </div>
+        </div>
+
+
+        <div id="allocSection" style="display:none;">
+          <h2 class="section-heading"><span>Event Allocation</span> Details</h2>
+          <div class="chart-card" style="margin-bottom:24px;">
+            <table class="data-table" id="allocTable"><thead><tr><th>Date</th><th>Type</th><th>Ticker</th><th>Offer Price</th><th>Subscribed</th><th>Fill Rate</th><th>Shares</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <h2 class="section-heading"><span>Feature</span> Recommendations</h2>
+        <div id="recsSection" class="chart-card" style="margin-bottom:24px;"></div>
       </div>
-      <div class="price-table-wrap">
-        <table class="data-table" id="priceTable">
-          <thead><tr><th>Date</th><th>NAV/Unit (EGP)</th><th>NAV/Unit (Real)</th><th>NAV/Unit (USD)</th><th>Chg (EGP)</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
 
-    <h2 class="section-heading"><span>Holdings</span> Contribution</h2>
-    <div class="chart-card" style="margin-bottom:24px;">
-      <table class="data-table" id="holdingsTable"><thead><tr><th>Ticker</th><th>Company</th><th>Contribution (%)</th><th>Status</th></tr></thead><tbody></tbody></table>
-    </div>
-
-    <div id="allocSection" style="display:none;">
-      <h2 class="section-heading"><span>Event Allocation</span> Details</h2>
-      <div class="chart-card" style="margin-bottom:24px;">
-        <table class="data-table" id="allocTable"><thead><tr><th>Date</th><th>Type</th><th>Ticker</th><th>Offer Price</th><th>Subscribed</th><th>Fill Rate</th><th>Shares</th></tr></thead><tbody></tbody></table>
-      </div>
-    </div>
-
-    <h2 class="section-heading"><span>Feature</span> Recommendations</h2>
-    <div id="recsSection" class="chart-card" style="margin-bottom:24px;"></div>
-
-    <h2 class="section-heading"><span>Event</span> Universe</h2>
-    <div class="chart-card" style="margin-bottom:24px;">
-      <table class="data-table" id="universeTable"><thead><tr><th>Type</th><th>Ticker</th><th>Company</th><th>Date</th><th>Offer Price</th><th>Raise (EGP)</th><th>Sector</th><th>Oversub (Retail)</th></tr></thead><tbody></tbody></table>
+      <!-- ═══ RIGHT DOCUMENTATION SIDEBAR ═══ -->
+      <aside class="right-sidebar" id="docSidebar"></aside>
     </div>
   </div>
 </div>
@@ -648,6 +725,7 @@ function selectModel(m) {
   currentModel = m;
   document.querySelectorAll(".model-tab").forEach(t => t.classList.toggle("active", t.dataset.model === m));
   buildControls();
+  renderDocPanel();
   runAndRender();
 }
 
@@ -656,9 +734,9 @@ function buildControls() {
   grid.innerHTML = "";
 
   const common = [
-    {key:"event_types", label:"Event Types", info:"Which equity events the fund participates in. IPOs are new listings on the exchange. Rights Issues are capital increases where listed companies issue new shares, typically at a discount to existing holders.", options:[{v:"all",l:"All Events"},{v:"ipo_only",l:"IPOs Only"},{v:"ipo_ri",l:"IPOs & Rights Issues"}]},
-    {key:"inception_date", label:"Inception Date", info:"The simulated fund launch date. Earlier dates give more backtest history but include different market regimes.", options:[{v:"2022-01-01",l:"Jan 2022"},{v:"2022-07-01",l:"Jul 2022"},{v:"2023-01-01",l:"Jan 2023"}]},
-    {key:"tbill_buffer", label:"T-Bill Buffer", info:"Percentage of fund AUM kept in a risk-free cash reserve. Earns the real Egyptian deposit rate (~7% in 2021 rising to ~19% in 2024, World Bank) and cushions equity drawdowns.", options:[{v:"0.10",l:"10%"},{v:"0",l:"0%"},{v:"0.20",l:"20%"}]},
+    {key:"event_types", label:"Event Types", info:"Which equity events the fund participates in. IPOs are new listings on the exchange. Rights Issues are capital increases where listed companies issue new shares, typically at a discount to existing holders.", options:[{v:"all",l:"IPOs & Rights Issues"},{v:"ipo_only",l:"IPOs Only"}]},
+    {key:"inception_date", label:"Inception Date", info:"The simulated fund launch date. Earlier dates give more backtest history but include different market regimes.", options:[{v:"2021-01-01",l:"Jan 2021"},{v:"2022-01-01",l:"Jan 2022"},{v:"2022-07-01",l:"Jul 2022"},{v:"2023-01-01",l:"Jan 2023"}]},
+    {key:"tbill_buffer", label:"T-Bill Buffer", info:"Percentage of fund AUM kept in Egyptian T-bills as a cash reserve. Earns risk-free yield (20-26%) and cushions equity drawdowns.", options:[{v:"0.10",l:"10%"},{v:"0",l:"0%"},{v:"0.20",l:"20%"}]},
     {key:"downside_protection", label:"Downside Protection", info:"Automatic stop-loss trigger. If a position drops by this percentage from its cost basis, it is sold to limit further losses.", options:[{v:"none",l:"None"},{v:"stop15",l:"Stop 15%"},{v:"stop20",l:"Stop 20%"}]},
   ];
   const bOnly = [
@@ -740,8 +818,8 @@ function runAndRender() {
       renderDrawdownChart(metrics);
       renderContribChart(metrics);
       renderPriceProjection(result, metrics);
-      renderHoldingsTable(metrics);
       renderAllocTable(result);
+      renderUniverse(metrics);
     } catch(e) {
       console.error("Simulation error:", e);
     }
@@ -756,7 +834,7 @@ function renderVerdict(m, config) {
 
   let text;
   if (pass) {
-    text = `This configuration returned ${m.cagrNom.toFixed(1)}% CAGR nominal (${m.cagrReal.toFixed(1)}% real, ${m.cagrUsd.toFixed(1)}% USD) with a ${Math.abs(m.maxDD).toFixed(1)}% max drawdown and ${m.sharpe.toFixed(2)} Sharpe. ${m.alpha > 0 ? `Outperformed the EGPT benchmark by ${m.alpha.toFixed(1)}pp.` : `Underperformed the EGPT benchmark by ${Math.abs(m.alpha).toFixed(1)}pp.`}`;
+    text = `This configuration returned ${m.cagrNom.toFixed(1)}% CAGR nominal (${m.cagrReal.toFixed(1)}% real, ${m.cagrUsd.toFixed(1)}% USD) with a ${Math.abs(m.maxDD).toFixed(1)}% max drawdown and ${m.sharpe.toFixed(2)} Sharpe. ${m.alpha > 0 ? `Outperformed EGX30 by ${m.alpha.toFixed(1)}pp.` : `Underperformed EGX30 by ${Math.abs(m.alpha).toFixed(1)}pp.`}`;
   } else {
     const reasons = [];
     if (m.totalReal <= 0) reasons.push("negative real return");
@@ -773,7 +851,7 @@ function renderKPIs(m) {
     {label:"USD Return",value:m.cagrUsd.toFixed(1)+"%",cls:m.cagrUsd>=0?"positive":"negative",sub:"Hard currency",info:"Annual return converted to US Dollars, accounting for EGP devaluation. The true international benchmark for Egyptian investors."},
     {label:"Max Drawdown",value:m.maxDD.toFixed(1)+"%",cls:"negative",sub:"Peak-to-trough",info:"Largest peak-to-trough decline in fund value. Measures the worst loss an investor would have experienced if they bought at the top."},
     {label:"Sharpe Ratio",value:m.sharpe.toFixed(2),cls:m.sharpe>=0?"positive":"negative",sub:"vs T-bills",info:"Risk-adjusted return: excess return over T-bills divided by volatility. Above 1.0 is good; below 0 means T-bills beat the fund."},
-    {label:"Alpha vs EGPT",value:(m.alpha>=0?"+":"")+m.alpha.toFixed(1)+"pp",cls:m.alpha>=0?"positive":"negative",sub:"Annualized",info:"Annualized outperformance vs the EGPT benchmark (VanEck Egypt ETF, converted to EGP). Positive alpha means the fund beat the broader Egyptian market on a return basis."},
+    {label:"Alpha vs EGX30",value:(m.alpha>=0?"+":"")+m.alpha.toFixed(1)+"pp",cls:m.alpha>=0?"positive":"negative",sub:"Annualized",info:"Annualized outperformance vs the EGX30 index. Positive alpha means the fund beat the broader market on a return basis."},
     {label:"Hit Rate",value:m.hitRate.toFixed(0)+"%",cls:m.hitRate>=50?"positive":"negative",sub:"Winners / Total",info:"Percentage of individual holdings that generated a positive return. Above 50% means more winners than losers."},
     {label:"Volatility",value:m.vol.toFixed(1)+"%",cls:"",sub:"Annualized",info:"Annualized standard deviation of daily returns. Higher volatility means larger day-to-day swings in fund value."},
   ];
@@ -797,7 +875,7 @@ function renderNavChart(m) {
       labels: ts.map(p=>p.date),
       datasets:[
         {label:"Fund NAV",data:ts.map(p=>p[key]),borderColor:"#B8965E",backgroundColor:"rgba(184,150,94,0.08)",fill:true,pointRadius:0,borderWidth:2,tension:0.3},
-        {label:"EGPT (rebased)",data:egx.map(p=>p.value),borderColor:"#6E7280",fill:false,pointRadius:0,borderWidth:1.5,borderDash:[5,3],tension:0.3},
+        {label:"EGX30 (rebased)",data:egx.map(p=>p.value),borderColor:"#6E7280",fill:false,pointRadius:0,borderWidth:1.5,borderDash:[5,3],tension:0.3},
       ]
     },
     options:{responsive:true,interaction:{mode:"index",intersect:false},plugins:{legend:{labels:{color:"#9A9285",font:{size:11}}}},scales:{x:{ticks:{color:"#9A9285",maxTicksLimit:12,font:{size:10}},grid:{color:"rgba(58,50,40,0.5)"}},y:{ticks:{color:"#9A9285",font:{size:10},callback:v=>(v/1e6).toFixed(0)+"M"},grid:{color:"rgba(58,50,40,0.5)"}}}}
@@ -825,16 +903,6 @@ function renderContribChart(m) {
   });
 }
 
-function renderHoldingsTable(m) {
-  const hc = m.holdingContribs;
-  const sorted = Object.entries(hc).sort((a,b)=>b[1]-a[1]);
-  const nameMap = {};
-  RAW.universe.forEach(c => nameMap[c.ticker] = c.name);
-  document.querySelector("#holdingsTable tbody").innerHTML = sorted.map(([t,v])=>`
-    <tr><td style="font-weight:bold;color:var(--text-primary)">${t}</td><td style="color:var(--text-secondary)">${nameMap[t]||t}</td>
-    <td style="color:${v>=0?"var(--green)":"var(--red)"}">${v>=0?"+":""}${v.toFixed(2)}%</td>
-    <td>${v>=0?'<span style="color:var(--green)">Winner</span>':'<span style="color:var(--red)">Loser</span>'}</td></tr>`).join("");
-}
 
 function renderAllocTable(result) {
   const section = document.getElementById("allocSection");
@@ -935,20 +1003,6 @@ function renderPriceProjection(result, metrics) {
       <div class="price-hero-sub">Hard currency &nbsp;·&nbsp; <span style="color:${cls(totalChgUsd)}">${fmtPct(totalChgUsd)}</span></div>
     </div>`;
 
-  // ── Summary stats ──
-  document.getElementById("priceSummary").innerHTML = [
-    {label:"CAGR (Nominal)",  value: metrics.cagrNom.toFixed(1)+"%",  color: cls(metrics.cagrNom)},
-    {label:"CAGR (Real)",     value: metrics.cagrReal.toFixed(1)+"%", color: cls(metrics.cagrReal)},
-    {label:"CAGR (USD)",      value: metrics.cagrUsd.toFixed(1)+"%",  color: cls(metrics.cagrUsd)},
-    {label:"Max Drawdown",    value: metrics.maxDD.toFixed(1)+"%",    color: "var(--red)"},
-    {label:"Total Units",     value: (metrics.initNav / LAUNCH_UNIT_PRICE / 1e6).toFixed(1)+"M", color:"var(--gold)"},
-    {label:"Period",          value: metrics.years.toFixed(1)+" yrs", color:"var(--text-secondary)"},
-  ].map(s=>`
-    <div class="price-stat">
-      <div class="price-stat-label">${s.label}</div>
-      <div class="price-stat-value" style="color:${s.color}">${s.value}</div>
-    </div>`).join("");
-
   // ── Chart ──
   const key = priceView === "real" ? "real" : priceView === "usd" ? "usd" : "nominal";
   const yLabel = priceView === "usd" ? "USD/unit" : "EGP/unit";
@@ -1024,23 +1078,245 @@ function renderPriceProjection(result, metrics) {
 function renderRecommendations() {
   const div = document.getElementById("recsSection");
   div.innerHTML = `
-    <div class="rec-card"><h4>Event Diversification — High Impact</h4><p>The real universe is 6 verified corporate actions: 2 IPOs (e-finance, Taaleem) and 4 cash rights issues (Export Development Bank, ADIB-Egypt, Beltone, Modern Education). Blending IPOs with rights issues spreads exposure across Technology, Education, Banking and Financial Services and reduces dependence on any single event.</p></div>
-    <div class="rec-card"><h4>Rights Issues — Discount Is Not Guaranteed</h4><p>Of the four real rights issues, three were priced below market (ADIB −29%, Beltone −36%, Modern Education −58%) giving an immediate margin of safety, but Export Development Bank was priced ~44% <em>above</em> market — a recapitalisation, not a discount. Rights issues only help when the subscription price is genuinely below the live market price, so screen each event individually rather than assuming a discount.</p></div>
-    <div class="rec-card"><h4>Cash Buffer vs the Real Risk-Free Rate</h4><p>Egypt's deposit / risk-free rate rose from ~7% (2021) to ~19% (2024, World Bank). A cash buffer earns real income and cushions drawdowns, but the bar is high: the risk-free leg only beats inflation in some years, so cash is a stabiliser, not a return engine.</p></div>
-    <div class="rec-card"><h4>Position Cap — Essential with a Small Universe</h4><p>With only 6 events, concentration risk is acute. A 15% position cap prevents any single failed event from destroying more than 15% of the fund — non-negotiable when the opportunity set is this thin.</p></div>
-    <div class="rec-card"><h4>Model C: Day-1 Flip vs Hold</h4><p>For IPO allocations, flipping on day 1 can capture the listing pop (e-finance opened at 16.80 vs a 13.98 offer). For rights issues the Hold strategy can work better when the subscription price was below market, but offers no edge when it was not. A hybrid, event-by-event decision is warranted.</p></div>
-    <div class="rec-card"><h4>Core Finding: Real Returns Are the Only Metric That Matters</h4><p>Against Egypt's real inflation (World Bank CPI), several configurations show positive nominal EGP returns but negative real returns. Any fund design that doesn't clear the inflation hurdle is destroying investor wealth regardless of the headline number.</p></div>
+    <div class="rec-card"><h4>Event Diversification — High Impact</h4><p>Combining IPOs and rights issues expands the opportunity set from ~5 events to 15+. Rights issues from established companies (CIB, EFG Hermes, Abu Qir) provide lower-risk exposure with built-in discounts (15-30% below market). The blended universe reduces single-event dependency.</p></div>
+    <div class="rec-card"><h4>Rights Issues — Built-in Margin of Safety</h4><p>Rights issues are offered at 15-30% discounts to market price. Even with lower oversubscription (1.8-7x vs 6-68x for IPOs), the discount provides an immediate unrealized gain on allocation. The fund benefits most when it can subscribe to rights across multiple sectors. Lower oversubscription also means higher fill rates, making allocation more predictable than IPOs.</p></div>
+    <div class="rec-card"><h4>T-Bill Buffer — High Impact</h4><p>With Egyptian T-bill rates at 20-26% during this period, even a 10-20% cash buffer earns substantial risk-free income. This is the most reliable lever for cushioning equity drawdowns while still generating return.</p></div>
+    <div class="rec-card"><h4>Position Cap — Essential at 15%</h4><p>With the expanded universe of 15+ events, concentration risk is better managed. However, a 15% cap still prevents any single failed event from destroying more than 15% of the fund. Non-negotiable for the live product.</p></div>
+    <div class="rec-card"><h4>Model C: Day-1 Flip is Dominant for IPOs</h4><p>For IPO allocations, flipping on day 1 captures the listing pop. However, for rights issues the "Hold" strategy often works better due to the built-in discount providing a margin of safety. Consider a hybrid approach.</p></div>
+    <div class="rec-card"><h4>Core Finding: Real Returns Are the Only Metric That Matters</h4><p>Multiple configurations show positive nominal EGP returns but negative real returns after Egypt's 30-40% inflation. Any fund design that doesn't clear the inflation hurdle is destroying investor wealth regardless of the headline number.</p></div>
   `;
 }
 
-function renderUniverse() {
+function renderUniverse(metrics) {
+  const hc = metrics ? metrics.holdingContribs : {};
+  const config = getConfig();
+  const endDate = "2025-12-31";
+  const windowDays = (config.window_years || 3) * 365;
+
+  // Filter universe dynamically based on current config
+  const eligible = RAW.universe.filter(co => {
+    if (!config.event_types.includes(co.event_type || "ipo")) return false;
+    if (co.listing_date > endDate) return false;
+    if (currentModel === "B") {
+      // Model B: company must have listed by end date and within window from inception
+      if (co.listing_date < config.inception_date) {
+        // Check if it's still within the 3-year window at inception
+        const ageAtInception = (new Date(config.inception_date) - new Date(co.listing_date)) / 86400000;
+        if (ageAtInception > windowDays) return false;
+      }
+    } else {
+      // Model C: company must list during the simulation period
+      if (co.listing_date < config.inception_date) return false;
+    }
+    return true;
+  });
+
   const typeLabel = {ipo:"IPO", rights_issue:"Rights Issue"};
-  const typeColor = {ipo:"var(--gold)", rights_issue:"#9C7EBD"};
-  document.querySelector("#universeTable tbody").innerHTML = RAW.universe.map(c=>`
-    <tr><td style="font-weight:bold;color:${typeColor[c.event_type]||'var(--gold)'};font-size:11px">${typeLabel[c.event_type]||c.event_type}</td>
-    <td style="font-weight:bold;color:var(--text-primary)">${c.ticker}</td><td>${c.name}</td><td>${c.listing_date}</td>
-    <td>${c.offer_price.toFixed(2)} EGP</td><td>${(c.raise_egp/1e9).toFixed(2)}B</td><td>${c.sector}</td>
-    <td>${c.oversub_retail ? c.oversub_retail+"x" : "—"}</td></tr>`).join("");
+  const ipoCount = eligible.filter(c => (c.event_type || "ipo") === "ipo").length;
+  const riCount = eligible.filter(c => c.event_type === "rights_issue").length;
+
+  // Sidebar mini-table
+  document.getElementById("universeCount").innerHTML =
+    `<strong>${eligible.length}</strong> event${eligible.length !== 1 ? "s" : ""}` +
+    (ipoCount ? ` · <span style="color:var(--gold)">${ipoCount} IPO${ipoCount>1?"s":""}</span>` : "") +
+    (riCount ? ` · <span style="color:#9C7EBD">${riCount} RI${riCount>1?"s":""}</span>` : "");
+
+  // Shorten sector for sidebar display
+  const shortSector = s => {
+    if (!s) return "—";
+    const map = {"Technology / Financial Infrastructure":"Fintech","Healthcare / Cosmeceuticals":"Healthcare","Food & Beverages":"Food & Bev","Sports / Entertainment":"Sports","Financial Services":"Financial","Industrials / Electrical":"Industrial","Textiles / Manufacturing":"Textiles","Energy / Petrochemicals":"Energy","Chemicals / Fertilizers":"Chemicals"};
+    return map[s] || (s.length > 14 ? s.substring(0,12) + "…" : s);
+  };
+
+  document.querySelector("#universeMini tbody").innerHTML = eligible.map(c => {
+    const et = c.event_type || "ipo";
+    const badgeClass = et === "ipo" ? "badge-ipo" : "badge-ri";
+    const badgeText = et === "ipo" ? "IPO" : "Rights Issue";
+    const contrib = hc[c.ticker];
+    const hasContrib = contrib !== undefined;
+    const contribVal = hasContrib ? contrib : null;
+    const contribColor = contribVal > 0 ? "var(--green)" : contribVal < 0 ? "var(--red)" : "var(--text-muted)";
+    const statusText = !hasContrib ? "—" : contribVal > 0 ? "Winner" : contribVal < 0 ? "Loser" : "Flat";
+    const statusColor = !hasContrib ? "var(--text-muted)" : contribVal > 0 ? "var(--green)" : contribVal < 0 ? "var(--red)" : "var(--text-muted)";
+    return `<tr>
+      <td><span class="type-badge ${badgeClass}">${badgeText}</span></td>
+      <td style="font-weight:bold;color:var(--text-primary)">${c.ticker}</td>
+      <td>${c.name}</td>
+      <td style="color:var(--text-muted)">${c.listing_date}</td>
+      <td>${c.offer_price.toFixed(2)} EGP</td>
+      <td>${(c.raise_egp/1e9).toFixed(2)}B</td>
+      <td>${shortSector(c.sector)}</td>
+      <td style="font-weight:bold;color:${contribColor}">${hasContrib ? (contribVal >= 0 ? "+" : "") + contribVal.toFixed(2) + "%" : "—"}</td>
+      <td style="font-weight:bold;color:${statusColor}">${statusText}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:16px;font-style:italic;">No eligible events for current configuration</td></tr>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DOCUMENTATION PANEL
+// ═══════════════════════════════════════════════════════════════
+
+function renderDocPanel() {
+  const isB = currentModel === "B";
+  const modelBadge = isB
+    ? '<span class="doc-model-badge model-b">Model B</span>'
+    : '<span class="doc-model-badge model-c">Model C</span>';
+
+  // ── Section 1: How the Fund Operates ──
+  const fundOpsContent = isB ? `
+    <div class="doc-label">Model B — Secondary Market (Post-Listing)</div>
+    <p>The fund buys shares of newly listed companies <strong>on the open market after they begin trading</strong>. It does not participate in the IPO subscription process itself — instead, it waits for shares to be available on the Egyptian Exchange (EGX), then builds positions through normal buy orders.</p>
+    <div class="doc-highlight">Think of it like this: the fund watches for new IPOs and rights issues, then buys the shares from the market just like any investor would — at whatever price the market is offering that day.</div>
+    <div class="doc-label">How It Works</div>
+    <ul>
+      <li><strong>Entry:</strong> When a new company lists (IPO) or completes a capital increase (rights issue), the fund buys shares based on the selected entry timing (Day 1, Day 5, or Day 30 after listing).</li>
+      <li><strong>Portfolio Construction:</strong> The fund allocates capital across all eligible holdings using the chosen weighting scheme (equal weight or proportional to offer size), subject to position and sector caps.</li>
+      <li><strong>Rebalancing:</strong> Periodically, the fund adjusts its positions to maintain target weights — either on a fixed quarterly schedule or whenever a new listing enters the universe.</li>
+      <li><strong>Exits:</strong> Holdings are sold when they age out of the investment window (3 years from listing), hit a stop-loss trigger, or exceed the maximum holding period.</li>
+      <li><strong>Cash Buffer:</strong> A portion of the fund is held in Egyptian T-bills, earning the risk-free rate (20-26% during this period) and providing a cushion against equity drawdowns.</li>
+    </ul>
+    <div class="doc-label">Key Advantage</div>
+    <p>Model B gives the fund full control over entry price and timing. It can wait for post-listing volatility to settle, and it avoids the allocation uncertainty of the IPO subscription process.</p>
+    <div class="doc-label">Key Risk</div>
+    <p>The fund buys at market prices, which may be significantly higher than the IPO offer price — especially if there's a large first-day pop. This means the fund misses the "listing gain" that Model C captures.</p>
+  ` : `
+    <div class="doc-label">Model C — Subscription / Allocation (Pre-Listing)</div>
+    <p>The fund participates directly in the <strong>IPO subscription and rights issue process</strong>, applying for shares at the offer price before trading begins. Allocated shares are then either flipped immediately for a listing-day gain or held for a defined period.</p>
+    <div class="doc-highlight">Think of it like this: the fund gets in line before the shares start trading, subscribing at the discounted offer price. It only gets a fraction of what it applies for (due to oversubscription), then decides whether to sell immediately or hold.</div>
+    <div class="doc-label">How It Works</div>
+    <ul>
+      <li><strong>Subscription:</strong> When an IPO or rights issue is announced, the fund subscribes using available cash. For IPOs, it commits up to 80% of available cash; for rights issues, up to 60%.</li>
+      <li><strong>Allocation:</strong> Due to oversubscription (other investors also want in), the fund only receives a fraction of its application. The fill rate = 1 / oversubscription multiple. Higher oversub = smaller allocation.</li>
+      <li><strong>Flip vs Hold:</strong> After shares are allocated and begin trading, the fund either flips immediately (Day 1 or Week 1) to capture the listing pop, or holds the position longer.</li>
+      <li><strong>Allocation Track:</strong> The fund subscribes as either a retail or institutional investor, each with different oversubscription levels and allocation tranches.</li>
+      <li><strong>Cash Between Events:</strong> When no events are active, the entire fund earns T-bill interest, which is substantial in Egypt's high-rate environment.</li>
+    </ul>
+    <div class="doc-label">Key Advantage</div>
+    <p>The fund buys at the offer price, which is typically below the first-day trading price. This built-in discount (especially for rights issues at 15-30% below market) provides an immediate margin of safety.</p>
+    <div class="doc-label">Key Risk</div>
+    <p>Allocation is uncertain and small. High oversubscription (e.g., 68x for Fawry) means the fund may only receive 1-2% of what it applied for. Large amounts of cash sit idle waiting for events.</p>
+  `;
+
+  // ── Section 2: Simulator Logic ──
+  const simLogicContent = isB ? `
+    <div class="doc-label">Model B — Simulation Engine</div>
+    <p>The simulator loops through every trading day from the inception date to end-2025, executing the following steps on each day:</p>
+
+    <div class="doc-step"><div class="doc-step-num">1</div><div class="doc-step-text"><strong>T-Bill Interest:</strong> The cash buffer earns daily interest at the prevailing Egyptian deposit rate (sourced from World Bank data, interpolated to daily). At 20-26% annually, this is a meaningful return source.</div></div>
+
+    <div class="doc-step"><div class="doc-step-num">2</div><div class="doc-step-text"><strong>Management Fee:</strong> A daily pro-rata fee (2% annually / 252 trading days) is deducted from the total fund value (cash + holdings).</div></div>
+
+    <div class="doc-step"><div class="doc-step-num">3</div><div class="doc-step-text"><strong>Exit Checks:</strong> Each existing position is checked for exit triggers — aged out (listed more than 3 years ago), stop-loss hit, holding period exceeded, or lock-up period approaching. Triggered positions are sold at the current market price minus 0.3% transaction costs.</div></div>
+
+    <div class="doc-step"><div class="doc-step-num">4</div><div class="doc-step-text"><strong>Eligible Universe:</strong> The engine builds the list of currently eligible companies — those that have listed, match the event type filter, are within the 3-year window, and have passed the entry delay (Day 1/5/30).</div></div>
+
+    <div class="doc-step"><div class="doc-step-num">5</div><div class="doc-step-text"><strong>Rebalance Decision:</strong> If a rebalance is triggered (quarterly or on new listing), the engine computes target weights using equal-weight or offer-size-weight, applies position caps (e.g., 15%) and sector caps, then buys/sells to reach targets.</div></div>
+
+    <div class="doc-step"><div class="doc-step-num">6</div><div class="doc-step-text"><strong>NAV Calculation:</strong> At end of day, total fund NAV = cash + sum of (shares × current price) for all positions. This is recorded for the time series.</div></div>
+
+    <div class="doc-label">Price Fallback</div>
+    <p>If no price exists for a stock on a given day (weekend, holiday), the engine uses the <strong>most recent available price</strong> looking backwards. This prevents gaps in the NAV series and reflects how real portfolios are valued.</p>
+
+    <div class="doc-label">Transaction Costs</div>
+    <p>Every buy and sell incurs a <strong>0.3% cost</strong> (brokerage + stamp duty), applied to the transaction value. This is deducted from cash on buys and from sale proceeds.</p>
+
+    <div class="doc-label">Unit Price</div>
+    <p>The fund unit price is derived from the NAV series. Starting at <code>10.00 EGP</code> per unit, the number of units = initial NAV / 10. Each day's unit price = current NAV / total units. This mirrors how real mutual fund unit prices are calculated.</p>
+  ` : `
+    <div class="doc-label">Model C — Simulation Engine</div>
+    <p>The simulator processes every trading day from inception to end-2025. Unlike Model B, it focuses on event-driven allocation rather than continuous portfolio management:</p>
+
+    <div class="doc-step"><div class="doc-step-num">1</div><div class="doc-step-text"><strong>T-Bill Interest:</strong> The <em>entire</em> cash balance earns daily interest at Egypt's deposit rate. Since Model C often holds mostly cash between events, this is a major return component.</div></div>
+
+    <div class="doc-step"><div class="doc-step-num">2</div><div class="doc-step-text"><strong>Management Fee:</strong> A daily fee (2% annually / 252 days) is deducted from total fund value — same as Model B.</div></div>
+
+    <div class="doc-step"><div class="doc-step-num">3</div><div class="doc-step-text"><strong>Event Allocation:</strong> On the listing date of each IPO or rights issue, the engine simulates the subscription process:<br>
+      • <strong>IPOs:</strong> Subscribe up to 80% of available cash or 10% of the total raise amount (whichever is smaller).<br>
+      • <strong>Rights Issues:</strong> Subscribe up to 60% of available cash or 15% of the rights tranche.<br>
+      • <strong>Fill Rate:</strong> = 1 / oversubscription multiple. E.g., 10x oversub → 10% fill rate.<br>
+      • <strong>Allocated shares</strong> = (subscription amount × fill rate) / offer price.</div></div>
+
+    <div class="doc-step"><div class="doc-step-num">4</div><div class="doc-step-text"><strong>Flip / Exit:</strong> Based on the flip strategy:<br>
+      • <strong>Day 1:</strong> Sell all allocated shares on the first trading day.<br>
+      • <strong>Week 1:</strong> Sell after 5 trading days.<br>
+      • <strong>Hold:</strong> Keep the position until the holding period expires or exit triggers fire.</div></div>
+
+    <div class="doc-step"><div class="doc-step-num">5</div><div class="doc-step-text"><strong>NAV Calculation:</strong> Same as Model B — cash + market value of all holdings, recorded daily.</div></div>
+
+    <div class="doc-label">Allocation Track</div>
+    <p>The fund can subscribe as a <strong>retail</strong> or <strong>institutional</strong> investor. Retail typically faces higher oversubscription (more competition from individuals) but has a dedicated allocation tranche. Institutional has lower oversub but competes with larger funds for a separate pool.</p>
+
+    <div class="doc-label">Why Cash Dominates</div>
+    <p>With only 6 events over 3-4 years and small fill rates (often 1-10%), Model C keeps most of its capital in T-bills most of the time. In Egypt's high-rate environment (20-26%), this cash drag actually becomes a <em>cash advantage</em> — the fund earns substantial returns while waiting for events.</p>
+  `;
+
+  // ── Section 3: Data Pipeline ──
+  const dataPipelineContent = `
+    <div class="doc-label">Overview</div>
+    <p>All data is <strong>100% real</strong> — sourced from Yahoo Finance and the World Bank. There is no synthetic data, no calibrated models, and no fallback generation. If any data source fails, the pipeline raises an error rather than silently fabricating numbers.</p>
+
+    <div class="doc-label">Stock Prices</div>
+    <p>Daily OHLCV (Open, High, Low, Close, Volume) data for each stock is fetched from the <strong>Yahoo Finance v8 chart API</strong>:</p>
+    <ul>
+      <li><code>EFIH.CA</code> — E-Finance (IPO, Oct 2021)</li>
+      <li><code>TALM.CA</code> — Taaleem (IPO, Apr 2021)</li>
+      <li><code>EXPA.CA</code> — Edita (Rights Issue, Apr 2022)</li>
+      <li><code>ADIB.CA</code> — Abu Dhabi Islamic Bank (RI, Dec 2022)</li>
+      <li><code>BTFH.CA</code> — Binext (RI, Jul 2023)</li>
+      <li><code>MOED.CA</code> — Moezz (RI, Nov 2023)</li>
+    </ul>
+    <p>The <code>.CA</code> suffix identifies Cairo Stock Exchange tickers in Yahoo's system. Data is fetched from each stock's listing date through end-2025.</p>
+
+    <div class="doc-label">FX Rate</div>
+    <p>Daily USD/EGP exchange rate from <code>USDEGP=X</code> on Yahoo Finance. Used to convert all EGP values to USD for hard-currency performance analysis. The Egyptian Pound devalued significantly during this period (from ~15.7 to ~50+ EGP/USD).</p>
+
+    <div class="doc-label">Benchmark Index</div>
+    <p>The <strong>VanEck Egypt Index ETF</strong> (<code>EGPT</code>), a USD-denominated ETF tracking Egyptian equities, is used as the EGX30 benchmark proxy. The USD price is converted to EGP using the daily FX rate via a merge-asof join (matching each ETF date to the nearest prior FX date). This provides a tradeable, verifiable proxy for the Egyptian market.</p>
+
+    <div class="doc-label">Inflation (CPI)</div>
+    <p>Egypt's Consumer Price Index is sourced from the <strong>World Bank API</strong> (indicator <code>FP.CPI.TOTL</code>). The data is annual; the pipeline interpolates to monthly using <strong>log-linear interpolation</strong> — each annual value is anchored at mid-year (Jul 1), and the log of the index is linearly interpolated between anchors, then exponentiated. This ensures compound growth is smooth across months.</p>
+
+    <div class="doc-label">Risk-Free Rate (T-Bill Proxy)</div>
+    <p>Egypt's deposit interest rate from the World Bank (<code>FR.INR.DPST</code>) is used as a proxy for T-bill yields. Annual rates are <strong>linearly interpolated</strong> to monthly, anchored at mid-year. During 2021-2024, this rate ranged from ~8% to ~26%, reflecting Egypt's monetary tightening cycle. The rate is converted from percentage to decimal (e.g., 20% → 0.20) and applied daily as the risk-free rate.</p>
+
+    <div class="doc-label">IPO Universe</div>
+    <p>The 6 events (2 IPOs + 4 rights issues) are hardcoded from verified EGX filings. Each entry includes: ticker, company name, listing date, offer price, shares offered, total raise amount, sector, event type, discount percentage (for rights issues), oversubscription multiples (retail and institutional), lockup period, and retail allocation percentage.</p>
+
+    <div class="doc-label">Data Flow</div>
+    <div class="doc-step"><div class="doc-step-num">1</div><div class="doc-step-text"><code>ipo_universe.py</code> defines the 6 verified events with all metadata.</div></div>
+    <div class="doc-step"><div class="doc-step-num">2</div><div class="doc-step-text"><code>market_data.py</code> fetches live prices, FX, benchmark, CPI, and T-bill data from Yahoo Finance and World Bank APIs.</div></div>
+    <div class="doc-step"><div class="doc-step-num">3</div><div class="doc-step-text"><code>export_data.py</code> runs the pipeline and exports everything to <code>output/market_data.json</code>.</div></div>
+    <div class="doc-step"><div class="doc-step-num">4</div><div class="doc-step-text"><code>web/index.html</code> loads the JSON and runs the entire simulation client-side — no backend server required.</div></div>
+  `;
+
+  const sidebar = document.getElementById("docSidebar");
+  // Preserve which tab was active (default to first)
+  const prev = sidebar.querySelector('.doc-tab.active');
+  const activeIdx = prev ? prev.dataset.idx : "0";
+
+  sidebar.innerHTML = `
+    <div class="doc-panel">
+      <div class="doc-panel-header">
+        <div class="doc-panel-title">${modelBadge} Documentation</div>
+        <div class="doc-tabs">
+          <button class="doc-tab${activeIdx==="0"?" active":""}" data-idx="0" onclick="switchDocTab(this)">Fund</button>
+          <button class="doc-tab${activeIdx==="1"?" active":""}" data-idx="1" onclick="switchDocTab(this)">Simulator</button>
+          <button class="doc-tab${activeIdx==="2"?" active":""}" data-idx="2" onclick="switchDocTab(this)">Data</button>
+        </div>
+      </div>
+      <div class="doc-tab-body${activeIdx==="0"?" active":""}" data-idx="0">${fundOpsContent}</div>
+      <div class="doc-tab-body${activeIdx==="1"?" active":""}" data-idx="1">${simLogicContent}</div>
+      <div class="doc-tab-body${activeIdx==="2"?" active":""}" data-idx="2">${dataPipelineContent}</div>
+    </div>
+  `;
+}
+
+function switchDocTab(btn) {
+  const panel = btn.closest('.doc-panel');
+  panel.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
+  panel.querySelectorAll('.doc-tab-body').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  panel.querySelector(`.doc-tab-body[data-idx="${btn.dataset.idx}"]`).classList.add('active');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1053,7 +1329,7 @@ async function init() {
     document.getElementById("app-loading").style.display = "none";
     document.getElementById("app").style.display = "block";
     buildControls();
-    renderUniverse();
+    renderDocPanel();
     renderRecommendations();
     runAndRender();
   } catch(e) {
