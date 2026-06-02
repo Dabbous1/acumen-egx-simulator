@@ -4,24 +4,34 @@ Market data — 100% REAL historic data. No synthetic / calibrated models.
 Sources:
   - Yahoo Finance v8 chart API (requests + Mozilla UA), TICKER.CA:
       EFIH, TALM, EXPA, ADIB, BTFH, MOED  → daily OHLCV
-  - Yahoo EGPT (VanEck Egypt Index ETF, USD) → benchmark, converted to EGP
-    and stored under key "egx30" (the engine's benchmark slot).
+  - EGX30 benchmark → the genuine EGX 30 index "since inception" daily series,
+    exported from the Egyptian Exchange itself (egx.com.eg, Indices Data →
+    EGX 30 → Index Since Inception (EGP)) and stored locally in
+    data/egx30_real.csv. Loaded under key "egx30" (the engine's benchmark
+    slot). Index points; the engine rebases it for comparison, so the raw
+    level is used directly.
   - Yahoo USDEGP=X → daily USD/EGP rate.
   - World Bank API (Egypt, annual, real), monthly-interpolated:
       FP.CPI.TOTL → consumer price index (key "cpi")
       FR.INR.DPST → deposit interest rate, used as the risk-free / T-bill
                     proxy (key "tbill", column "tbill_annual").
 
-All series are fetched live; there is no synthetic fallback. If a fetch
-fails the run will raise so that no fabricated data silently enters results.
+The stock/FX/macro series are fetched live; the EGX30 benchmark is read from
+the committed CSV (the EGX site is WAF-protected and not directly scriptable).
+There is no synthetic fallback — any failure raises so that no fabricated data
+silently enters results.
 """
 
 import datetime as dt
 import json
+import os
 import urllib.request
 import numpy as np
 import pandas as pd
 from data.ipo_universe import EGX_IPO_UNIVERSE
+
+_DATA_DIR = os.path.dirname(os.path.abspath(__file__))
+_EGX30_CSV = os.path.join(_DATA_DIR, "egx30_real.csv")
 
 _UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 
@@ -109,19 +119,19 @@ def _fetch_usdegp(start: dt.date, end: dt.date) -> pd.DataFrame:
     return out.reset_index(drop=True)
 
 
-def _fetch_egpt_in_egp(usdegp: pd.DataFrame, start: dt.date, end: dt.date) -> pd.DataFrame:
-    """EGPT ETF (USD) converted to EGP, stored as the benchmark ('egx30' slot)."""
-    df = _fetch_yahoo_chart("EGPT", start, end)
-    df = df[["date", "close"]].rename(columns={"close": "egpt_usd"})
-    merged = pd.merge_asof(
-        df.sort_values("date"),
-        usdegp.sort_values("date"),
-        on="date",
-        direction="backward",
-    )
-    merged["egx30"] = (merged["egpt_usd"] * merged["usdegp"]).round(2)
-    out = merged[["date", "egx30"]].dropna().reset_index(drop=True)
-    print(f"  Benchmark (EGPT->EGP): {len(out)} real days from Yahoo (EGPT)")
+def _load_egx30_real(start: dt.date, end: dt.date) -> pd.DataFrame:
+    """Genuine EGX 30 index daily closes, sourced from the Egyptian Exchange
+    (egx.com.eg) and committed to data/egx30_real.csv. Stored as the benchmark
+    ('egx30' slot) in raw index points; the engine rebases it for comparison."""
+    if not os.path.exists(_EGX30_CSV):
+        raise RuntimeError(f"Real EGX30 file missing: {_EGX30_CSV}")
+    df = pd.read_csv(_EGX30_CSV, parse_dates=["date"])
+    df = df.rename(columns={"close": "egx30"})[["date", "egx30"]]
+    mask = (df["date"] >= pd.Timestamp(start)) & (df["date"] <= pd.Timestamp(end))
+    out = df.loc[mask].dropna().reset_index(drop=True)
+    if len(out) == 0:
+        raise RuntimeError("Real EGX30 file produced no rows in range")
+    print(f"  Benchmark (real EGX 30 index): {len(out)} days from EGX (egx.com.eg)")
     return out
 
 
@@ -205,7 +215,7 @@ def build_full_dataset() -> dict[str, pd.DataFrame]:
 
     print("Loading REAL macro / FX / benchmark data...")
     usdegp = _fetch_usdegp(start, end)
-    egx30 = _fetch_egpt_in_egp(usdegp, start, end)
+    egx30 = _load_egx30_real(start, end)
     cpi = _fetch_cpi(start, end)
     tbill = _fetch_tbill(start, end)
 

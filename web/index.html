@@ -204,9 +204,48 @@
     .running-indicator { display:inline-block; width:5px; height:5px; background:var(--gold); border-radius:50%; margin-right:6px; animation:pulse 2s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
 
+    /* horizontal-scroll wrapper for wide tables on small screens */
+    .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
     @media (max-width:900px) {
       .chart-section { grid-template-columns:1fr; }
       .kpi-row { grid-template-columns:repeat(2,1fr); }
+    }
+    @media (max-width:768px) {
+      .header { padding:16px 18px; }
+      .header h1 { font-size:25px; margin-top:10px; line-height:1.15; }
+      .header-desc { font-size:13px; margin-top:8px; }
+      .header-top { gap:10px; }
+      .container { padding:16px 14px; }
+      .app-layout { gap:16px; }
+      .sidebar-section { padding:16px; border-radius:14px; }
+      .universe-panel { padding:16px 16px 8px; }
+      .price-card { padding:18px 16px; }
+      .chart-card { padding:16px; }
+      .kpi-value { font-size:25px; }
+      .price-hero-value { font-size:27px; }
+      .section-heading { font-size:20px; }
+      .verdict-banner { padding:16px 18px; }
+      .universe-panel-title, .chart-title { font-size:17px; }
+      /* let wide tables scroll sideways instead of squashing */
+      .table-scroll, .price-table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+      .universe-table, #allocTable, #priceTable { min-width:620px; }
+      /* keep hover tooltips inside the viewport */
+      .info-icon .info-tooltip { width:min(240px,78vw); }
+    }
+    @media (max-width:480px) {
+      .header h1 { font-size:21px; }
+      .brand { font-size:10px; letter-spacing:1.8px; }
+      .kpi-row { grid-template-columns:1fr 1fr; gap:10px; }
+      .kpi-card { padding:14px 10px; }
+      .kpi-value { font-size:22px; }
+      .price-hero-value { font-size:23px; }
+      .controls-grid { flex-direction:column; }
+      .controls-grid .control-group { flex:1 1 auto; }
+      .model-tabs { flex-direction:column; }
+      .model-tab { padding:12px 14px; }
+      .doc-tab { font-size:10px; letter-spacing:0.8px; padding:10px 4px; }
+      .chart-toggle { flex-wrap:wrap; }
     }
   </style>
 </head>
@@ -255,10 +294,12 @@
             <h2 class="universe-panel-title">Fund Universe</h2>
             <div class="universe-count" id="universeCount"></div>
           </div>
-          <table class="universe-table" id="universeMini">
-            <thead><tr><th>Type</th><th>Ticker</th><th>Company</th><th>Listed</th><th>Offer Price</th><th>Raise</th><th>Sector</th><th>Contribution</th><th>Status</th></tr></thead>
-            <tbody></tbody>
-          </table>
+          <div class="table-scroll">
+            <table class="universe-table" id="universeMini">
+              <thead><tr><th>Type</th><th>Ticker</th><th>Company</th><th>Listed</th><th>Offer Price</th><th>Raise</th><th>Sector</th><th>Contribution</th><th>Status</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
 
         <div id="verdictBanner" class="verdict-banner pass"></div>
@@ -307,7 +348,9 @@
         <div id="allocSection" style="display:none;">
           <h2 class="section-heading"><span>Event Allocation</span> Details</h2>
           <div class="chart-card" style="margin-bottom:24px;">
-            <table class="data-table" id="allocTable"><thead><tr><th>Date</th><th>Type</th><th>Ticker</th><th>Offer Price</th><th>Subscribed</th><th>Fill Rate</th><th>Shares</th></tr></thead><tbody></tbody></table>
+            <div class="table-scroll">
+              <table class="data-table" id="allocTable"><thead><tr><th>Date</th><th>Type</th><th>Ticker</th><th>Offer Price</th><th>Subscribed</th><th>Fill Rate</th><th>Shares</th></tr></thead><tbody></tbody></table>
+            </div>
           </div>
         </div>
 
@@ -1024,7 +1067,7 @@ function renderPriceProjection(result, metrics) {
       <div class="price-hero-value" style="color:var(--gold)">${fmtEGP(launch.nominal)} EGP</div>
       <div class="price-hero-sub">${launch.date}</div>
     </div>
-    <div style="font-size:28px;color:var(--border);align-self:center;">→</div>
+    <div style="font-size:40px;line-height:1;font-weight:700;color:var(--gold);align-self:center;padding:0 4px;">&#10142;</div>
     <div class="price-hero">
       <div class="price-hero-label">Final Price</div>
       <div class="price-hero-value" style="color:${cls(totalChgNom)}">${fmtEGP(final.nominal)} EGP</div>
@@ -1325,7 +1368,7 @@ function renderDocPanel() {
     <p>Daily USD/EGP exchange rate from <code>USDEGP=X</code> on Yahoo Finance. Used to convert all EGP values to USD for hard-currency performance analysis. The Egyptian Pound devalued significantly during this period (from ~15.7 to ~50+ EGP/USD).</p>
 
     <div class="doc-label">Benchmark Index</div>
-    <p>The <strong>VanEck Egypt Index ETF</strong> (<code>EGPT</code>), a USD-denominated ETF tracking Egyptian equities, is used as the EGX30 benchmark proxy. The USD price is converted to EGP using the daily FX rate via a merge-asof join (matching each ETF date to the nearest prior FX date). This provides a tradeable, verifiable proxy for the Egyptian market.</p>
+    <p>The benchmark is the <strong>genuine EGX 30 index</strong> — the headline index of the Egyptian Exchange — using its official daily "Index Since Inception (EGP)" series sourced directly from the exchange (<code>egx.com.eg</code> → Indices Data → EGX 30). The dataset spans <strong>1,215 trading days</strong> from 03 Jan 2021 (10,845 pts) to 31 Dec 2025 (41,829 pts). Values are real index points; the engine rebases the series to the fund's starting NAV so the two can be compared directly, and computes alpha from the return series (so units are irrelevant).</p>
 
     <div class="doc-label">Inflation (CPI)</div>
     <p>Egypt's Consumer Price Index is sourced from the <strong>World Bank API</strong> (indicator <code>FP.CPI.TOTL</code>). The data is annual; the pipeline interpolates to monthly using <strong>log-linear interpolation</strong> — each annual value is anchored at mid-year (Jul 1), and the log of the index is linearly interpolated between anchors, then exponentiated. This ensures compound growth is smooth across months.</p>
